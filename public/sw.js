@@ -11,17 +11,10 @@ const DYNAMIC_CACHE = 'jesus-letters-dynamic-v2'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/src/main.js',
-  '/src/App.vue',
-  '/src/components/WelcomePage.vue',
-  '/src/components/HomePage.vue',
-  '/src/components/SharePage.vue',
-  '/src/components/LetterPage.vue',
-  '/src/components/HistoryPage.vue',
-  '/src/services/SimplifiedAIService.js',
-  '/src/services/StorageService.js',
-  '/src/services/ExportService.js',
   '/manifest.json',
+  '/favicon.svg',
+  '/icons/icon-192x192.svg',
+  '/icons/icon-512x512.svg',
   'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap'
 ]
 
@@ -47,7 +40,16 @@ self.addEventListener('install', (event) => {
         return self.skipWaiting()
       })
       .catch((error) => {
-        console.error('❌ Service Worker 安裝失敗:', error)
+        console.error('❌ Service Worker 快取資源失敗:', error)
+        console.error('快取失敗的詳細資訊:', {
+          message: error.message,
+          stack: error.stack,
+          failedAssets: STATIC_ASSETS
+        })
+        // 即使快取失敗，也讓 Service Worker 繼續安裝
+        // 這樣可以確保基本的 Service Worker 功能仍然可用
+        console.log('⚠️ 儘管快取失敗，Service Worker 仍將繼續安裝')
+        return self.skipWaiting()
       })
   )
 })
