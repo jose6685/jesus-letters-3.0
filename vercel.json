@@ -13,45 +13,39 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server/app.js"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/favicon.ico",
-      "destination": "/favicon.svg"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*\\.js)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/javascript; charset=utf-8"
-        }
-      ]
+      "src": "/api/(.*)",
+      "dest": "/server/app.js"
     },
     {
-      "source": "/(.*\\.css)",
-      "headers": [
-        {
-          "key": "Content-Type", 
-          "value": "text/css; charset=utf-8"
-        }
-      ]
+      "src": "/manifest.json",
+      "dest": "/manifest.json",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8"
+      }
     },
     {
-      "source": "/manifest.json",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json; charset=utf-8"
-        }
-      ]
+      "src": "/favicon.svg",
+      "dest": "/favicon.svg",
+      "headers": {
+        "Content-Type": "image/svg+xml"
+      }
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.svg",
+      "headers": {
+        "Content-Type": "image/svg+xml"
+      }
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ],
   "env": {
