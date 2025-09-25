@@ -134,6 +134,7 @@
 
 <script>
 import { ref, computed } from 'vue'
+import { API_CONFIG } from '../config/api.js'
 
 export default {
   name: 'SharePage',
@@ -173,7 +174,7 @@ export default {
         }
 
         // 發送到後端API
-        const response = await fetch('http://localhost:3002/api/ai/generate', {
+        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_GENERATE}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

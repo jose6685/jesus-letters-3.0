@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 import dotenv from 'dotenv'
@@ -12,7 +13,22 @@ const __dirname = dirname(__filename)
 // 確保環境變量在使用前載入 - 從父目錄載入 .env 檔案
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
 
+// 創建 Express 應用程式而不是路由器
+const app = express()
 const router = express.Router()
+
+// 設置 CORS
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? (process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['https://jesus-letters-3-0.vercel.app'])
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}
+
+app.use(cors(corsOptions))
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 /**
  * AI服務類 - 後端版本
@@ -995,4 +1011,76 @@ router.post('/test', async (req, res, next) => {
   }
 })
 
-export default router
+// 將路由掛載到應用程式
+app.use('/api/ai', router)
+
+// 根路由
+app.get('/', (req, res) => {
+  res.json({
+    message: '耶穌的信 3.0 AI API 服務',
+    version: '3.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      generate: '/api/ai/generate',
+      status: '/api/ai/status',
+      test: '/api/ai/test'
+    }
+  })
+})
+
+// 健康檢查路由
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'AI API'
+  })
+})
+
+// 錯誤處理中間件
+app.use((error, req, res, next) => {
+  console.error('❌ 伺服器錯誤:', error)
+  res.status(500).json({
+    error: '內部伺服器錯誤',
+    message: process.env.NODE_ENV === 'development' ? error.message : '請稍後再試'
+  })
+})
+
+// 404 處理
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: '找不到請求的資源',
+    path: req.originalUrl
+  })
+})
+
+// 配置埠號 - 優先使用 Render 提供的 PORT 環境變數
+const PORT = process.env.PORT || 3002
+
+// 啟動伺服器
+const server = app.listen(PORT, () => {
+  console.log(`✅ 伺服器已成功啟動，正在監聽埠號 ${PORT}`)
+  console.log('準備好接收來自前端的請求了！')
+  console.log(`🌐 API 端點: http://localhost:${PORT}/api/ai`)
+  console.log(`🔍 健康檢查: http://localhost:${PORT}/health`)
+})
+
+// 優雅關閉處理
+process.on('SIGTERM', () => {
+  console.log('📡 收到 SIGTERM 信號，正在優雅關閉伺服器...')
+  server.close(() => {
+    console.log('✅ 伺服器已成功關閉')
+    process.exit(0)
+  })
+})
+
+process.on('SIGINT', () => {
+  console.log('📡 收到 SIGINT 信號，正在優雅關閉伺服器...')
+  server.close(() => {
+    console.log('✅ 伺服器已成功關閉')
+    process.exit(0)
+  })
+})
+
+export default app

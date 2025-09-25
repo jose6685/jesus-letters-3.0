@@ -10,6 +10,7 @@ const corsOptions = {
       'http://localhost:3001',
       'https://jesus-letters-3-0-dxwc1yoi4-jose6685-6249s-projects.vercel.app',
       'https://jesus-letters-3-0-6p3m69woq-jose6685-6249s-projects.vercel.app',
+      'https://jesus-letters-3-0-hruu47r9a-jose6685-6249s-projects.vercel.app',
       'https://jesus-letters-3-0.vercel.app'
     ];
     
