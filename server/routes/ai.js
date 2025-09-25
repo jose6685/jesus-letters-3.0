@@ -103,7 +103,7 @@ class BackendAIService {
         response = await this.callGeminiService(fullPrompt, requestId)
         usedService = 'gemini'
       } else if (this.preferredService === 'openai' && this.openaiService) {
-        response = await this.callOpenAIService(fullPrompt, requestId)
+        response = await this.callOpenAIService(fullPrompt, requestId, userInput)
         usedService = 'openai'
       } else {
         throw new Error('首選AI服務不可用')
@@ -148,7 +148,7 @@ class BackendAIService {
     console.log(`[${requestId}] 🤖 使用Gemini AI服務`)
     
     const model = this.geminiService.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -162,8 +162,10 @@ class BackendAIService {
     return response.text()
   }
 
-  async callOpenAIService(prompt, requestId) {
+  async callOpenAIService(prompt, requestId, userInput = {}) {
     console.log(`[${requestId}] 🤖 使用OpenAI GPT服務`)
+    
+    const { nickname = '朋友', topic = '生活', situation = '' } = userInput
     
     const completion = await this.openaiService.chat.completions.create({
       model: 'gpt-4',
@@ -232,7 +234,7 @@ class BackendAIService {
 
       // 如果首選是Gemini，嘗試OpenAI
       if (this.preferredService === 'gemini' && this.openaiService) {
-        response = await this.callOpenAIService(fullPrompt, requestId)
+        response = await this.callOpenAIService(fullPrompt, requestId, userInput)
         usedService = 'openai-fallback'
       }
       // 如果首選是OpenAI，嘗試Gemini
