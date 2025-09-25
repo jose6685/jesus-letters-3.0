@@ -218,7 +218,7 @@ export default {
       }
     }
 
-    // 處理聖經經文引用
+    // 處理聖經經文引用 - 增強版本，支援串流和不完整 JSON
     const processBiblicalReferences = (references) => {
       if (!references) return []
       
@@ -226,52 +226,125 @@ export default {
       if (Array.isArray(references)) {
         return references.map(ref => {
           // 如果是物件格式 { verse: "...", content: "..." }
-          if (typeof ref === 'object' && ref.verse && ref.content) {
-            return `${ref.verse} - ${ref.content}`
+          if (typeof ref === 'object' && ref !== null) {
+            if (ref.verse && ref.content) {
+              return `${ref.verse} - ${ref.content}`
+            }
+            // 處理只有部分欄位的物件
+            if (ref.verse) return ref.verse
+            if (ref.content) return ref.content
+            // 如果是其他物件格式，嘗試轉換為字串
+            return JSON.stringify(ref)
           }
-          // 如果是字符串，直接返回
-          return typeof ref === 'string' ? ref : String(ref)
+          // 如果是字符串，進一步處理可能的 JSON 格式
+          if (typeof ref === 'string') {
+            return parseStringReference(ref)
+          }
+          return String(ref)
         }).filter(ref => ref && ref.trim().length > 0)
       }
       
       // 如果是字符串，嘗試解析
       if (typeof references === 'string') {
-        // 先檢查是否包含 JSON 物件格式的經文
-        if (references.includes('"verse":') && references.includes('"content":')) {
-          try {
-            // 嘗試解析包含 JSON 物件的字符串
-            const jsonMatches = references.match(/\{\s*"verse":\s*"[^"]+",\s*"content":\s*"[^"]+"\s*\}/g)
-            if (jsonMatches) {
-              return jsonMatches.map(match => {
-                try {
-                  const obj = JSON.parse(match)
-                  return `${obj.verse} - ${obj.content}`
-                } catch (e) {
-                  return match
-                }
-              })
-            }
-          } catch (e) {
-            console.warn('解析 JSON 物件格式經文失敗:', e)
-          }
+        return parseStringReference(references)
+      }
+      
+      // 如果是單一物件
+      if (typeof references === 'object' && references !== null) {
+        if (references.verse && references.content) {
+          return [`${references.verse} - ${references.content}`]
         }
-        
-        // 嘗試標準 JSON 解析
-        try {
-          const parsed = JSON.parse(references)
-          if (Array.isArray(parsed)) {
-            return processBiblicalReferences(parsed) // 遞歸處理
-          }
-        } catch (e) {
-          // JSON解析失敗，使用換行符分割
-          return references
-            .split('\n')
-            .map(ref => ref.trim())
-            .filter(ref => ref.length > 0)
-        }
+        if (references.verse) return [references.verse]
+        if (references.content) return [references.content]
       }
       
       return []
+    }
+
+    // 解析字符串格式的經文引用
+    const parseStringReference = (str) => {
+      if (!str || typeof str !== 'string') return []
+      
+      // 處理包含 JSON 物件的字符串
+      if (str.includes('"verse":') || str.includes('"content":')) {
+        const results = []
+        
+        // 嘗試匹配完整的 JSON 物件
+        const completeJsonMatches = str.match(/\{\s*"verse":\s*"[^"]*(?:\\.[^"]*)*",\s*"content":\s*"[^"]*(?:\\.[^"]*)*"\s*\}/g)
+        if (completeJsonMatches) {
+          completeJsonMatches.forEach(match => {
+            try {
+              const obj = JSON.parse(match)
+              if (obj.verse && obj.content) {
+                results.push(`${obj.verse} - ${obj.content}`)
+              } else if (obj.verse) {
+                results.push(obj.verse)
+              } else if (obj.content) {
+                results.push(obj.content)
+              }
+            } catch (e) {
+              console.warn('解析完整 JSON 物件失敗:', e, match)
+              results.push(match) // 保留原始字串
+            }
+          })
+        }
+        
+        // 處理不完整的 JSON 片段
+        if (results.length === 0) {
+          // 嘗試提取 verse 和 content 欄位
+          const verseMatch = str.match(/"verse":\s*"([^"]*(?:\\.[^"]*)*)"/g)
+          const contentMatch = str.match(/"content":\s*"([^"]*(?:\\.[^"]*)*)"/g)
+          
+          if (verseMatch && contentMatch) {
+            const verses = verseMatch.map(m => m.match(/"verse":\s*"([^"]*)"/)?.[1]).filter(Boolean)
+            const contents = contentMatch.map(m => m.match(/"content":\s*"([^"]*)"/)?.[1]).filter(Boolean)
+            
+            // 配對 verse 和 content
+            for (let i = 0; i < Math.max(verses.length, contents.length); i++) {
+              const verse = verses[i] || ''
+              const content = contents[i] || ''
+              if (verse && content) {
+                results.push(`${verse} - ${content}`)
+              } else if (verse) {
+                results.push(verse)
+              } else if (content) {
+                results.push(content)
+              }
+            }
+          } else if (verseMatch) {
+            verseMatch.forEach(m => {
+              const verse = m.match(/"verse":\s*"([^"]*)"/)?.[1]
+              if (verse) results.push(verse)
+            })
+          } else if (contentMatch) {
+            contentMatch.forEach(m => {
+              const content = m.match(/"content":\s*"([^"]*)"/)?.[1]
+              if (content) results.push(content)
+            })
+          }
+        }
+        
+        if (results.length > 0) return results
+      }
+      
+      // 嘗試標準 JSON 解析
+      try {
+        const parsed = JSON.parse(str)
+        if (Array.isArray(parsed)) {
+          return processBiblicalReferences(parsed) // 遞歸處理
+        }
+        if (typeof parsed === 'object' && parsed !== null) {
+          return processBiblicalReferences(parsed)
+        }
+      } catch (e) {
+        // JSON 解析失敗，使用換行符分割
+        return str
+          .split('\n')
+          .map(ref => ref.trim())
+          .filter(ref => ref.length > 0 && !ref.match(/^[\{\}",:\s]*$/)) // 過濾掉只包含 JSON 符號的行
+      }
+      
+      return [str.trim()].filter(ref => ref.length > 0)
     }
 
     // 生成唯一ID

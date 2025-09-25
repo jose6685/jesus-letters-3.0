@@ -75,7 +75,13 @@
             :key="index"
             class="scripture-item"
           >
-            {{ reference }}
+            <div v-if="isStructuredReference(reference)" class="structured-scripture">
+              <h4 class="scripture-verse">{{ getVerseFromReference(reference) }}</h4>
+              <p class="scripture-content">{{ getContentFromReference(reference) }}</p>
+            </div>
+            <div v-else class="simple-scripture">
+              {{ reference }}
+            </div>
           </div>
         </div>
       </div>
@@ -408,6 +414,25 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
       clearInterval(statusInterval)
     })
 
+    // 輔助函數：檢查是否為結構化經文引用（包含 verse 和 content）
+    const isStructuredReference = (reference) => {
+      if (typeof reference !== 'string') return false
+      // 檢查是否包含 " - " 分隔符，表示這是 "verse - content" 格式
+      return reference.includes(' - ') && reference.split(' - ').length === 2
+    }
+
+    // 輔助函數：從結構化引用中提取經文章節
+    const getVerseFromReference = (reference) => {
+      if (!isStructuredReference(reference)) return reference
+      return reference.split(' - ')[0].trim()
+    }
+
+    // 輔助函數：從結構化引用中提取經文內容
+    const getContentFromReference = (reference) => {
+      if (!isStructuredReference(reference)) return ''
+      return reference.split(' - ')[1].trim()
+    }
+
     return {
       processedBiblicalReferences,
       voiceStatus,
@@ -421,7 +446,10 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
       handleNewShare,
       handleVoiceToggle,
       getVoiceButtonTitle,
-      getVoiceButtonText
+      getVoiceButtonText,
+      isStructuredReference,
+      getVerseFromReference,
+      getContentFromReference
     }
   }
 }
@@ -644,6 +672,31 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
   white-space: normal !important;
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+}
+
+/* 結構化經文樣式 */
+.structured-scripture {
+  display: block !important;
+}
+
+.scripture-verse {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  display: block !important;
+}
+
+.scripture-content {
+  margin: 0;
+  color: var(--text-primary);
+  font-style: italic;
+  line-height: 1.6;
+  display: block !important;
+}
+
+.simple-scripture {
+  display: block !important;
 }
 
 .core-message {
