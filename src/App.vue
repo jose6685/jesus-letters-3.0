@@ -180,15 +180,17 @@ export default {
       // beforeinstallprompt 事件監聽器
       window.addEventListener('beforeinstallprompt', (e) => {
         console.log('🔧 PWA Debug: beforeinstallprompt event triggered');
-        // 只在需要時阻止默認行為
+        // 阻止默認的安裝橫幅，讓我們控制何時顯示
+        e.preventDefault();
+        
+        // 只在非獨立模式下保存事件
         if (!isStandalone) {
-          e.preventDefault();
           deferredPrompt.value = e;
           canInstall.value = true;
           showInstallPrompt.value = true;
-          console.log('🔧 PWA Debug: Install prompt is now available');
+          console.log('🔧 PWA Debug: Install prompt is now available and deferred');
         } else {
-          console.log('🔧 PWA Debug: App already in standalone mode, not preventing default');
+          console.log('🔧 PWA Debug: App already in standalone mode, ignoring prompt');
         }
       });
 
@@ -310,9 +312,9 @@ export default {
       }
       
       try {
-        console.log('🔧 PWA Debug: Showing install prompt');
+        console.log('🔧 PWA Debug: Showing install prompt via deferredPrompt.prompt()');
         
-        // 顯示安裝提示
+        // 顯示安裝提示 - 這是關鍵的調用
         const promptResult = await deferredPrompt.value.prompt();
         console.log('🔧 PWA Debug: Prompt result:', promptResult);
         
@@ -322,22 +324,24 @@ export default {
         
         if (outcome === 'accepted') {
           console.log('🔧 PWA Debug: User accepted installation');
-          // 可以在這裡添加成功安裝的提示
+          // 隱藏安裝提示
+          showInstallPrompt.value = false;
+          canInstall.value = false;
+          
+          // 成功安裝的提示
           setTimeout(() => {
             alert('應用程式安裝成功！\n您現在可以在桌面或應用程式列表中找到它。');
           }, 1000);
         } else {
           console.log('🔧 PWA Debug: User dismissed installation');
+          // 用戶拒絕安裝，但保持按鈕可用
         }
         
-        // 清理
+        // 清理 deferred prompt（無論用戶選擇如何）
         deferredPrompt.value = null;
-        canInstall.value = false;
         
       } catch (error) {
         console.error('🔧 PWA Debug: Installation error:', error);
-        
-        // 根據錯誤類型提供不同的處理
         if (error.name === 'NotAllowedError') {
           alert('安裝被阻止。請檢查瀏覽器設置或稍後再試。');
         } else if (error.name === 'AbortError') {
