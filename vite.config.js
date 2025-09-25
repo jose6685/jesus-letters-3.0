@@ -45,37 +45,47 @@ export default defineConfig({
     terserOptions: {
       compress: {
         // 移除console.log (生產環境)
-        drop_console: true,
+        drop_console: process.env.NODE_ENV === 'production',
         drop_debugger: true,
         // 移除未使用的代碼
-        dead_code: true,
-        // 優化條件表達式
-        conditionals: true,
-        // 優化布爾值
-        booleans: true
+        pure_funcs: ['console.log']
       },
       mangle: {
-        // 保留類名（用於調試）
-        keep_classnames: false,
-        keep_fnames: false
+        // 保留類名
+        keep_classnames: true,
+        // 保留函數名
+        keep_fnames: true
+      },
+      format: {
+        // 移除註釋
+        comments: false
       }
     },
+    // 生成source map用於調試
+    sourcemap: process.env.NODE_ENV !== 'production',
+    // 設置chunk大小警告限制
+    chunkSizeWarningLimit: 1000,
+    // 資源內聯限制
+    assetsInlineLimit: 4096,
     // 構建目標
     target: 'es2015',
-    // 資源內聯閾值 (4KB)
-    assetsInlineLimit: 4096,
     // 啟用CSS代碼分割
-    cssCodeSplit: true,
-    // 生成source map (開發時)
-    sourcemap: process.env.NODE_ENV === 'development'
+    cssCodeSplit: true
   },
+  // 開發服務器配置
   server: {
     port: 3001,
     host: true,
+    cors: true,
     // 開發服務器優化
     hmr: {
       overlay: true
     }
+  },
+  // 預覽服務器配置
+  preview: {
+    port: 3000,
+    host: true
   },
   // 優化依賴預構建
   optimizeDeps: {
@@ -108,10 +118,5 @@ export default defineConfig({
         })
       ]
     }
-  },
-  // 預覽服務器配置
-  preview: {
-    port: 3000,
-    host: true
   }
 })
