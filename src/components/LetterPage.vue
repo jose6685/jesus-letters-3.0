@@ -64,14 +64,14 @@
       </div>
 
       <!-- 聖經經文 -->
-      <div v-if="letter.biblicalReferences && letter.biblicalReferences.length > 0" class="scripture-section">
+      <div v-if="processedBiblicalReferences && processedBiblicalReferences.length > 0" class="scripture-section">
         <div class="section-header">
           <div class="section-icon">📖</div>
           <h3>相關經文</h3>
         </div>
         <div class="scripture-list">
           <div 
-            v-for="(reference, index) in letter.biblicalReferences" 
+            v-for="(reference, index) in processedBiblicalReferences" 
             :key="index"
             class="scripture-item"
           >
@@ -133,7 +133,7 @@
 </template>
 
 <script>
-import { ref, reactive, onUnmounted } from 'vue'
+import { ref, reactive, onUnmounted, computed } from 'vue'
 import speechService from '@/services/SpeechService.js'
 
 export default {
@@ -146,6 +146,63 @@ export default {
   },
   emits: ['back', 'new-share'],
   setup(props, { emit }) {
+    // 處理聖經經文引用
+    const processedBiblicalReferences = computed(() => {
+      const references = props.letter.biblicalReferences
+      if (!references) return []
+      
+      // 如果已經是數組，處理數組中的每個元素
+      if (Array.isArray(references)) {
+        return references.map(ref => {
+          // 如果是物件格式 { verse: "...", content: "..." }
+          if (typeof ref === 'object' && ref.verse && ref.content) {
+            return `${ref.verse} - ${ref.content}`
+          }
+          // 如果是字符串，直接返回
+          return typeof ref === 'string' ? ref : String(ref)
+        }).filter(ref => ref && ref.trim().length > 0)
+      }
+      
+      // 如果是字符串，嘗試解析
+      if (typeof references === 'string') {
+        // 先檢查是否包含 JSON 物件格式的經文
+        if (references.includes('"verse":') && references.includes('"content":')) {
+          try {
+            // 嘗試解析包含 JSON 物件的字符串
+            const jsonMatches = references.match(/\{\s*"verse":\s*"[^"]+",\s*"content":\s*"[^"]+"\s*\}/g)
+            if (jsonMatches) {
+              return jsonMatches.map(match => {
+                try {
+                  const obj = JSON.parse(match)
+                  return `${obj.verse} - ${obj.content}`
+                } catch (e) {
+                  return match
+                }
+              })
+            }
+          } catch (e) {
+            console.warn('解析 JSON 物件格式經文失敗:', e)
+          }
+        }
+        
+        // 嘗試標準 JSON 解析
+        try {
+          const parsed = JSON.parse(references)
+          if (Array.isArray(parsed)) {
+            return processedBiblicalReferences.value // 遞歸處理
+          }
+        } catch (e) {
+          // JSON解析失敗，使用換行符分割
+          return references
+            .split('\n')
+            .map(ref => ref.trim())
+            .filter(ref => ref.length > 0)
+        }
+      }
+      
+      return []
+    })
+
     // 語音播放狀態
     const voiceStatus = reactive({
       isPlaying: false
@@ -352,6 +409,7 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
     })
 
     return {
+      processedBiblicalReferences,
       voiceStatus,
       formatDate,
       formatLetterText,
