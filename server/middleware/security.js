@@ -6,7 +6,11 @@ import express from 'express';
 // CORS 配置
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'];
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3001',
+      'https://jesus-letters-3-0-dxwc1yoi4-jose6685-6249s-projects.vercel.app',
+      'https://jesus-letters-3-0.vercel.app'
+    ];
     
     // 允許沒有 origin 的請求（如移動應用）
     if (!origin) return callback(null, true);

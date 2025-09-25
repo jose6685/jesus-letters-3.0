@@ -19,6 +19,12 @@
       "destination": "/server/app.js"
     }
   ],
+  "redirects": [
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*\\.js)",

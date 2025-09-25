@@ -58,3 +58,4 @@ ios/DerivedData/
 # Temporary files
 tmp/
 temp/
+.vercel
