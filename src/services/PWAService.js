@@ -362,7 +362,19 @@ class PWAService {
     try {
       // 跳過等待，立即激活新的Service Worker
       if (this.serviceWorker.waiting) {
-        this.serviceWorker.waiting.postMessage({ type: 'SKIP_WAITING' });
+        // 使用 MessageChannel 確保消息正確傳遞
+        const messageChannel = new MessageChannel();
+        
+        // 設置響應監聽器（可選）
+        messageChannel.port1.onmessage = (event) => {
+          console.log('✅ Service Worker 響應:', event.data);
+        };
+        
+        // 發送消息，不期待響應
+        this.serviceWorker.waiting.postMessage(
+          { type: 'SKIP_WAITING' },
+          [messageChannel.port2]
+        );
       }
       
       // 重新加載頁面以應用更新
@@ -449,10 +461,13 @@ class PWAService {
       
       // 發送消息給Service Worker進行後台同步
       if (this.serviceWorker && this.serviceWorker.active) {
+        // 使用簡單的 postMessage，不期待響應
         this.serviceWorker.active.postMessage({
           type: 'BACKGROUND_SYNC',
           action: 'sync-offline-data'
         });
+        
+        console.log('📤 已發送後台同步請求');
       }
       
     } catch (error) {

@@ -180,11 +180,16 @@ export default {
       // beforeinstallprompt 事件監聽器
       window.addEventListener('beforeinstallprompt', (e) => {
         console.log('🔧 PWA Debug: beforeinstallprompt event triggered');
-        e.preventDefault();
-        deferredPrompt.value = e;
-        canInstall.value = true;
-        showInstallPrompt.value = true;
-        console.log('🔧 PWA Debug: Install prompt is now available');
+        // 只在需要時阻止默認行為
+        if (!isStandalone) {
+          e.preventDefault();
+          deferredPrompt.value = e;
+          canInstall.value = true;
+          showInstallPrompt.value = true;
+          console.log('🔧 PWA Debug: Install prompt is now available');
+        } else {
+          console.log('🔧 PWA Debug: App already in standalone mode, not preventing default');
+        }
       });
 
       // appinstalled 事件監聽器

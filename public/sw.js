@@ -219,26 +219,56 @@ self.addEventListener('message', (event) => {
   switch (type) {
     case 'SKIP_WAITING':
       self.skipWaiting()
+      // 對於 SKIP_WAITING，不需要響應
       break
       
     case 'GET_VERSION':
-      event.ports[0].postMessage({ version: CACHE_NAME })
+      // 同步響應，直接發送
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ version: CACHE_NAME })
+      }
       break
       
     case 'CLEAR_CACHE':
-      clearAllCaches().then(() => {
-        event.ports[0].postMessage({ success: true })
-      })
+      // 異步操作，使用 event.waitUntil 確保操作完成
+      if (event.ports && event.ports[0]) {
+        const port = event.ports[0]
+        event.waitUntil(
+          clearAllCaches()
+            .then(() => {
+              port.postMessage({ success: true })
+            })
+            .catch((error) => {
+              console.error('❌ 清理緩存失敗:', error)
+              port.postMessage({ success: false, error: error.message })
+            })
+        )
+      }
       break
       
     case 'CACHE_URLS':
-      cacheUrls(data.urls).then(() => {
-        event.ports[0].postMessage({ success: true })
-      })
+      // 異步操作，使用 event.waitUntil 確保操作完成
+      if (event.ports && event.ports[0] && data && data.urls) {
+        const port = event.ports[0]
+        event.waitUntil(
+          cacheUrls(data.urls)
+            .then(() => {
+              port.postMessage({ success: true })
+            })
+            .catch((error) => {
+              console.error('❌ 緩存URL失敗:', error)
+              port.postMessage({ success: false, error: error.message })
+            })
+        )
+      }
       break
       
     default:
       console.log('🔔 未知消息類型:', type)
+      // 對於未知類型，如果有端口，發送錯誤響應
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ success: false, error: '未知消息類型' })
+      }
   }
 })
 
@@ -305,6 +335,14 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('sync', (event) => {
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync())
+  }
+})
+
+// 處理來自主線程的後台同步請求
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'BACKGROUND_SYNC') {
+    console.log('🔄 收到後台同步請求:', event.data.action)
+    // 這裡可以處理後台同步邏輯，但不需要響應
   }
 })
 
