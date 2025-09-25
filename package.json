@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "vercel-build": "vite build",
     "preview": "vite preview",
     "server": "node server/index.js",
     "server:dev": "nodemon server/index.js",
