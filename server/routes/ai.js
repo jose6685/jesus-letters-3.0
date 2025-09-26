@@ -60,7 +60,9 @@ class BackendAIService {
       // 初始化OpenAI服務
       if (this.openaiApiKey) {
         this.openaiService = new OpenAI({
-          apiKey: this.openaiApiKey
+          apiKey: this.openaiApiKey,
+          timeout: 30000, // 設定30秒超時
+          maxRetries: 2   // 最多重試2次
         })
         console.log('✅ OpenAI服務初始化成功')
       } else {
@@ -173,12 +175,13 @@ class BackendAIService {
     
     const { nickname = '朋友', topic = '生活', situation = '' } = userInput
     
-    const completion = await this.openaiService.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `你是一位聖經數據分析專家，擁有來自基督教網站和聖經應用程式的知識庫。你的任務是以耶穌的身份回應用戶的需求。
+    try {
+      const completion = await this.openaiService.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `你是一位聖經數據分析專家，擁有來自基督教網站和聖經應用程式的知識庫。你的任務是以耶穌的身份回應用戶的需求。
 
 **重要：細節關注與個人化原則**
 - 必須仔細閱讀並識別用戶輸入中的每一個重要細節：
@@ -217,21 +220,36 @@ class BackendAIService {
   "biblicalReferences": "3-5個相關的聖經經文引用，包含經文內容和出處，從不同熱門度層級選取",
   "coreMessage": "核心屬靈信息摘要"
 }`
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 4000
-    })
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+        timeout: 25000 // 設定25秒超時（比全域超時稍短）
+      })
 
-    const aiEndTime = Date.now()
-    const aiDuration = (aiEndTime - aiStartTime) / 1000
-    console.log(`[Request ID: ${requestId}] ✅ 外部 AI 生成完畢，耗時: ${aiDuration.toFixed(1)}秒`)
+      const aiEndTime = Date.now()
+      const aiDuration = (aiEndTime - aiStartTime) / 1000
+      console.log(`[Request ID: ${requestId}] ✅ 外部 AI 生成完畢，耗時: ${aiDuration.toFixed(1)}秒`)
 
-    return completion.choices[0].message.content
+      return completion.choices[0].message.content
+    } catch (error) {
+      const aiEndTime = Date.now()
+      const aiDuration = (aiEndTime - aiStartTime) / 1000
+      console.error(`[Request ID: ${requestId}] ❌ OpenAI API 呼叫失敗，耗時: ${aiDuration.toFixed(1)}秒`, error.message)
+      
+      // 如果是超時錯誤，拋出特定錯誤類型
+      if (error.message.includes('timeout') || error.code === 'ETIMEDOUT') {
+        const timeoutError = new Error('AI服務回應超時，請稍後重試')
+        timeoutError.type = 'TIMEOUT_ERROR'
+        throw timeoutError
+      }
+      
+      throw error
+    }
   }
 
   async tryFallbackService(userInput, requestId, startTime) {
