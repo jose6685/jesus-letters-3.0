@@ -215,8 +215,8 @@ class BackendAIService {
 
 ## 絕對輸出規則 (ABSOLUTE OUTPUT RULES)
 1. 你的唯一任務是生成一個 JSON 物件。
-2. 你的回應**必須**以 `{` 字元開始，並以 `}` 字元結束。
-3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 ```json）。
+2. 你的回應**必須**以 \`{\` 字元開始，並以 \`}\` 字元結束。
+3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 \`\`\`json）。
 4. JSON 物件必須包含以下幾個鍵："jesusLetter" (string), "guidedPrayer" (string), "biblicalReferences" (array of strings), "coreMessage" (string)。
 5. 確保 JSON 內部所有字串的值都使用雙引號 " 並正確轉義所有特殊字元。
 現在，請生成 JSON 物件：`
@@ -349,8 +349,8 @@ class BackendAIService {
 
 ## 絕對輸出規則 (ABSOLUTE OUTPUT RULES)
 1. 你的唯一任務是生成一個 JSON 物件。
-2. 你的回應**必須**以 `{` 字元開始，並以 `}` 字元結束。
-3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 ```json）。
+2. 你的回應**必須**以 \`{\` 字元開始，並以 \`}\` 字元結束。
+3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 \`\`\`json）。
 4. JSON 物件必須包含以下幾個鍵："jesusLetter" (string), "guidedPrayer" (string), "biblicalReferences" (array of strings), "coreMessage" (string)。
 5. 確保 JSON 內部所有字串的值都使用雙引號 " 並正確轉義所有特殊字元。
 現在，請生成 JSON 物件：`
