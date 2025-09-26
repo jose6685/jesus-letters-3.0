@@ -68,7 +68,19 @@ let resolvedBaseUrl = null;
 // API配置
 export const API_CONFIG = {
   // 原始 Base URL（不包含 /api）
-  RAW_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  RAW_BASE_URL: (() => {
+    const envUrl = import.meta.env.VITE_API_BASE_URL;
+    // 檢查環境變數是否正確設置（不包含變數名稱）
+    if (envUrl && !envUrl.includes('VITE_API_BASE_URL=')) {
+      return envUrl;
+    }
+    // 在生產環境中使用 Vercel 部署的 URL
+    if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+      return window.location.origin;
+    }
+    // 默認本地開發環境
+    return 'http://localhost:3001';
+  })(),
   
   // 動態解析的 Base URL
   get BASE_URL() {
@@ -78,9 +90,9 @@ export const API_CONFIG = {
   // API端點
   ENDPOINTS: {
     // AI服務
-    AI_GENERATE: '/ai/generate',
-    AI_STATUS: '/ai/status',
-    AI_TEST: '/ai/test',
+    AI_GENERATE: '/generate',
+    AI_STATUS: '/status',
+    AI_TEST: '/test',
     
     // 健康檢查
     HEALTH: '/health',
