@@ -149,7 +149,7 @@ class BackendAIService {
     const aiStartTime = Date.now()
     
     const model = this.geminiService.getGenerativeModel({ 
-      model: 'gemini-1.5-flash-latest',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.7, // Gemini設定保持不變
         topK: 40,
@@ -227,8 +227,7 @@ class BackendAIService {
           }
         ],
         temperature: 0.8, // 針對gpt-4o-mini稍微提高創意度
-        max_tokens: 10000, // 提升到10000以充分利用gpt-4o-mini的16384 token限制
-        timeout: 20000 // 縮短到20秒，gpt-4o-mini速度更快
+        max_tokens: 10000 // 提升到10000以充分利用gpt-4o-mini的16384 token限制
       })
 
       const aiEndTime = Date.now()
