@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
  */
 class BackendAIService {
   constructor() {
-    this.preferredService = 'gemini'
+    this.preferredService = 'openai'
     this.geminiService = null
     this.openaiService = null
     this.isInitialized = false
