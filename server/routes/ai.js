@@ -13,8 +13,7 @@ const __dirname = dirname(__filename)
 // 確保環境變量在使用前載入 - 從父目錄載入 .env 檔案
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') })
 
-// 創建 Express 應用程式而不是路由器
-const app = express()
+// 創建 Express 路由器
 const router = express.Router()
 
 // 設置 CORS
@@ -26,9 +25,9 @@ const corsOptions = {
   optionsSuccessStatus: 200
 }
 
-app.use(cors(corsOptions))
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+// 中間件設置
+router.use(express.json({ limit: '10mb' }))
+router.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 /**
  * AI服務類 - 後端版本
@@ -1116,14 +1115,6 @@ app.use((error, req, res, next) => {
   return res.status(500).json({
     error: '內部伺服器錯誤',
     details: process.env.NODE_ENV === 'development' ? error.message : '請稍後再試'
-  })
-})
-
-// 404 處理
-app.use('*', (req, res) => {
-  return res.status(404).json({
-    error: '找不到請求的資源',
-    details: `路徑: ${req.originalUrl}`
   })
 })
 

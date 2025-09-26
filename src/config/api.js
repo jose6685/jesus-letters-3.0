@@ -79,7 +79,7 @@ export const API_CONFIG = {
       return window.location.origin;
     }
     // 默認本地開發環境
-    return 'http://localhost:3001';
+    return 'http://localhost:3002';
   })(),
   
   // 動態解析的 Base URL
@@ -90,9 +90,9 @@ export const API_CONFIG = {
   // API端點
   ENDPOINTS: {
     // AI服務
-    AI_GENERATE: '/generate',
-    AI_STATUS: '/status',
-    AI_TEST: '/test',
+    AI_GENERATE: '/ai/generate',
+    AI_STATUS: '/ai/status',
+    AI_TEST: '/ai/test',
     
     // 健康檢查
     HEALTH: '/health',
