@@ -213,13 +213,13 @@ class BackendAIService {
 主題：${topic}
 情況：${situation}
 
-請以JSON格式回應，包含以下欄位：
-{
-  "jesusLetter": "以耶穌身份寫給${nickname}的個人化信件，必須直接提及和回應輸入中的所有具體人名、事件和細節，至少500字",
-  "guidedPrayer": "為${nickname}的具體情況量身定制的禱告，要針對提及的具體人名和事件進行代禱，你是一位充滿同理心的屬靈夥伴，與人同喜同悲，至少500字",
-  "biblicalReferences": "3-5個相關的聖經經文引用，包含經文內容和出處，從不同熱門度層級選取",
-  "coreMessage": "核心屬靈信息摘要"
-}`
+## 絕對輸出規則 (ABSOLUTE OUTPUT RULES)
+1. 你的唯一任務是生成一個 JSON 物件。
+2. 你的回應**必須**以 `{` 字元開始，並以 `}` 字元結束。
+3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 ```json）。
+4. JSON 物件必須包含以下幾個鍵："jesusLetter" (string), "guidedPrayer" (string), "biblicalReferences" (array of strings), "coreMessage" (string)。
+5. 確保 JSON 內部所有字串的值都使用雙引號 " 並正確轉義所有特殊字元。
+現在，請生成 JSON 物件：`
           },
           {
             role: 'user',
@@ -347,23 +347,13 @@ class BackendAIService {
 情緒適配：
 根據用戶的情緒狀態調整回應語調：困難時期提供安慰和希望，感恩時刻與用戶一同讚美，疑惑困擾時提供智慧和指引。
 
-你的回應必須是一個完整的JSON字串，包含以下四個鍵值：
-- jesusLetter: 一封充滿愛和智慧的回信（至少500字，純繁體中文）
-- guidedPrayer: 一篇引導式禱告文（至少500字，純繁體中文，你是一位充滿同理心的屬靈夥伴或長輩，與人同喜同悲，並懇切地為他們祈求天父的醫治、安慰與幫助，開頭說「我來為您禱告，如果您願意，可以跟著一起唸」）
-- biblicalReferences: 相關的聖經經文推薦（純繁體中文，請從不同熱門度層級中選取）
-- coreMessage: 核心信息摘要（純繁體中文）
-
-重要要求：
-1. 你的回應必須是一個完整的JSON字串
-2. 所有內容必須使用繁體中文
-3. 回信要體現耶穌的愛、智慧和安慰
-4. 禱告文要以屬靈長輩代禱的身份，整合耶穌回信中的核心信息和安慰
-5. 聖經經文要與用戶情況相關
-6. 語言要溫暖、親切、充滿希望
-7. 當主題是"其他"時，在禱告中應該說"在生活中的各種需要"
-8. JSON字符串中的換行符使用單一的\\n
-
-請立即開始你的JSON回應：`
+## 絕對輸出規則 (ABSOLUTE OUTPUT RULES)
+1. 你的唯一任務是生成一個 JSON 物件。
+2. 你的回應**必須**以 `{` 字元開始，並以 `}` 字元結束。
+3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 ```json）。
+4. JSON 物件必須包含以下幾個鍵："jesusLetter" (string), "guidedPrayer" (string), "biblicalReferences" (array of strings), "coreMessage" (string)。
+5. 確保 JSON 內部所有字串的值都使用雙引號 " 並正確轉義所有特殊字元。
+現在，請生成 JSON 物件：`
   }
 
   parseResponse(response, requestId) {
