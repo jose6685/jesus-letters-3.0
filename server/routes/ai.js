@@ -214,11 +214,23 @@ class BackendAIService {
 情況：${situation}
 
 ## 絕對輸出規則 (ABSOLUTE OUTPUT RULES)
+{
+  "rules": [
+    "所有回應必須是 JSON 格式",
+    "結構固定為: { jesusLetter, guidedPrayer, biblicalReferences, coreMessage }",
+    "若遇到錯誤，回傳 { error: '錯誤描述' }"
+  ]
+}
+
+**嚴格格式要求：**
 1. 你的唯一任務是生成一個 JSON 物件。
 2. 你的回應**必須**以 \`{\` 字元開始，並以 \`}\` 字元結束。
 3. **絕對不可**在 JSON 物件前後添加任何解釋、問候、註解或 markdown 標記（如 \`\`\`json）。
 4. JSON 物件必須包含以下幾個鍵："jesusLetter" (string), "guidedPrayer" (string), "biblicalReferences" (array of strings), "coreMessage" (string)。
 5. 確保 JSON 內部所有字串的值都使用雙引號 " 並正確轉義所有特殊字元。
+6. **錯誤處理**：如果無法生成正常回應，請回傳：{ "error": "具體錯誤描述" }
+7. **絕對禁止**：任何非 JSON 格式的輸出，包括解釋文字、道歉或其他內容。
+
 現在，請生成 JSON 物件：`
           },
           {
@@ -967,20 +979,57 @@ router.post('/generate', async (req, res, next) => {
     }
 
     // 生成AI回應
-    const aiResponse = await aiService.generateResponse(userInput)
+    let aiResponse
+    try {
+      aiResponse = await aiService.generateResponse(userInput)
+      
+      // 確保 AI 回應是有效的 JSON 格式
+      if (!aiResponse || typeof aiResponse !== 'object') {
+        throw new Error('AI 回應格式無效')
+      }
+      
+      // 驗證必要的字段
+      const requiredFields = ['jesusLetter', 'guidedPrayer', 'biblicalReferences', 'coreMessage']
+      const missingFields = requiredFields.filter(field => !aiResponse[field])
+      
+      if (missingFields.length > 0) {
+        console.warn('❌ AI 回應缺少必要字段:', missingFields)
+        throw new Error(`AI 回應缺少必要字段: ${missingFields.join(', ')}`)
+      }
+      
+    } catch (aiError) {
+      console.error('❌ AI 服務錯誤:', aiError.message)
+      
+      // 根據朋友建議：不管 AI 回傳什麼，都要修正成乾淨 JSON 再送給前端
+      aiResponse = {
+        error: 'AI 回傳格式錯誤',
+        details: aiError.message,
+        fallback: true
+      }
+    }
 
-    res.json({
-      success: true,
-      data: {
+    // 確保回應總是有效的 JSON 格式
+    const response = {
+      success: !aiResponse.error,
+      data: aiResponse.error ? aiResponse : {
         userInput,
         aiResponse
       },
       timestamp: new Date().toISOString()
-    })
+    }
+
+    // 根據朋友建議：明確返回 200 狀態碼
+    return res.status(200).json(response)
 
   } catch (error) {
-    console.error('❌ AI生成失敗:', error)
-    next(error)
+    console.error('❌ 後端處理失敗:', error)
+    
+    // 根據朋友建議：確保總是回傳有效的 JSON 和正確狀態碼
+    return res.status(500).json({
+      error: '後端呼叫失敗',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    })
   }
 })
 

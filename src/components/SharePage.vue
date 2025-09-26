@@ -182,14 +182,31 @@ export default {
           body: JSON.stringify(requestData)
         })
 
+        // 檢查 HTTP 狀態碼
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorText = await response.text()
+          throw new Error(`HTTP錯誤 ${response.status}: ${errorText}`)
         }
 
         const result = await response.json()
 
+        // 根據朋友建議：檢查後端回應的 success 狀態
+        if (!result.success) {
+          throw new Error(`後端錯誤：${result.error || result.data?.error || '未知錯誤'}`)
+        }
+
+        // 檢查數據結構是否正確
+        if (!result.data || !result.data.aiResponse) {
+          throw new Error('AI 回應格式不正確')
+        }
+
         // 從正確的數據結構中提取AI響應
         const aiResponse = result.data.aiResponse
+
+        // 驗證必要欄位
+        if (!aiResponse.jesusLetter || !aiResponse.guidedPrayer) {
+          throw new Error('AI 回應內容不完整')
+        }
 
         // 創建信件對象
         const letterData = {
@@ -212,7 +229,21 @@ export default {
 
       } catch (error) {
         console.error('發送信件失敗:', error)
-        alert('發送失敗，請檢查網絡連接後重試')
+        
+        // 根據朋友建議：更精確的錯誤處理
+        if (error.message.includes('HTTP錯誤')) {
+          alert(`請求失敗：${error.message}`)
+        } else if (error.message.includes('後端錯誤')) {
+          alert(`伺服器錯誤：${error.message}`)
+        } else if (error.message.includes('AI 回應')) {
+          alert(`AI 處理錯誤：${error.message}`)
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          alert('發送失敗，請檢查網絡連接後重試')
+        } else if (error.message.includes('JSON')) {
+          alert('伺服器回應格式錯誤，請稍後再試')
+        } else {
+          alert(`請求失敗：${error.message}`)
+        }
       } finally {
         isSubmitting.value = false
       }
