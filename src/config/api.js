@@ -1,14 +1,86 @@
+// API Base URL 自動偵測功能
+async function detectApiBaseUrl(baseUrl) {
+  const testPaths = ["", "/api"];
+  
+  for (const path of testPaths) {
+    try {
+      const testUrl = `${baseUrl}${path}/health`;
+      console.log(`🔍 測試 API 端點: ${testUrl}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超時
+      
+      const res = await fetch(testUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (res.ok) {
+        const resolvedUrl = `${baseUrl}${path}`;
+        console.log(`✅ API Base URL 確認成功: ${resolvedUrl}`);
+        return resolvedUrl;
+      }
+    } catch (err) {
+      console.log(`❌ 測試失敗: ${baseUrl}${path}/health - ${err.message}`);
+    }
+  }
+  
+  // 如果 /health 都失敗，嘗試測試其他端點
+  for (const path of testPaths) {
+    try {
+      const testUrl = `${baseUrl}${path}`;
+      console.log(`🔍 測試根端點: ${testUrl}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const res = await fetch(testUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (res.ok || res.status === 404) { // 404 也表示服務器有回應
+        const resolvedUrl = `${baseUrl}${path}`;
+        console.log(`✅ API Base URL 確認成功 (根端點): ${resolvedUrl}`);
+        return resolvedUrl;
+      }
+    } catch (err) {
+      console.log(`❌ 根端點測試失敗: ${baseUrl}${path} - ${err.message}`);
+    }
+  }
+  
+  throw new Error("無法偵測 API Base URL，請確認後端是否正確部署");
+}
+
+// 全局變數存儲解析後的 Base URL
+let resolvedBaseUrl = null;
+
 // API配置
 export const API_CONFIG = {
-  // 後端API基礎URL
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api',
+  // 原始 Base URL（不包含 /api）
+  RAW_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  
+  // 動態解析的 Base URL
+  get BASE_URL() {
+    return resolvedBaseUrl || this.RAW_BASE_URL;
+  },
   
   // API端點
   ENDPOINTS: {
     // AI服務
-    AI_GENERATE: '/ai/generate',
-    AI_STATUS: '/ai/status',
-    AI_TEST: '/ai/test',
+    AI_GENERATE: '/api/ai/generate',
+    AI_STATUS: '/api/ai/status',
+    AI_TEST: '/api/ai/test',
     
     // 健康檢查
     HEALTH: '/health',
@@ -34,10 +106,44 @@ export class APIClient {
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL
     this.timeout = API_CONFIG.TIMEOUT
+    this.initialized = false
+  }
+
+  // 初始化 API 客戶端，自動偵測 Base URL
+  async initialize() {
+    if (this.initialized) return;
+    
+    try {
+      console.log('🚀 開始初始化 API 客戶端...');
+      const rawBaseUrl = API_CONFIG.RAW_BASE_URL;
+      console.log(`📡 原始 Base URL: ${rawBaseUrl}`);
+      
+      resolvedBaseUrl = await detectApiBaseUrl(rawBaseUrl);
+      this.baseURL = resolvedBaseUrl;
+      this.initialized = true;
+      
+      console.log(`🎯 API 客戶端初始化完成，使用 Base URL: ${resolvedBaseUrl}`);
+    } catch (error) {
+      console.error('❌ API 客戶端初始化失敗:', error);
+      // 使用原始 URL 作為後備
+      resolvedBaseUrl = API_CONFIG.RAW_BASE_URL;
+      this.baseURL = resolvedBaseUrl;
+      this.initialized = true;
+      console.log(`🔄 使用後備 Base URL: ${resolvedBaseUrl}`);
+    }
+  }
+
+  // 確保在請求前已初始化
+  async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initialize();
+    }
   }
 
   // 通用請求方法
   async request(endpoint, options = {}) {
+    await this.ensureInitialized();
+    
     const url = `${this.baseURL}${endpoint}`
     const config = {
       method: 'GET',
@@ -99,8 +205,17 @@ export class APIClient {
   }
 }
 
-// 創建API客戶端實例
+// 創建API客戶端實例並自動初始化
 export const apiClient = new APIClient()
+
+// 自動初始化 API 客戶端
+;(async () => {
+  try {
+    await apiClient.initialize();
+  } catch (error) {
+    console.error('API 客戶端自動初始化失敗:', error);
+  }
+})();
 
 // AI服務API
 export const aiAPI = {

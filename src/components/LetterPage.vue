@@ -269,7 +269,11 @@ export default {
             url: window.location.href
           })
         } catch (error) {
-          console.log('分享取消或失敗')
+          // 分享取消或失敗，使用備用方案
+          const text = `來自耶穌的信\n\n${props.letter.jesusLetter.substring(0, 200)}...`
+          navigator.clipboard.writeText(text).then(() => {
+            alert('內容已複製到剪貼板')
+          })
         }
       } else {
         // 備用分享方式
@@ -340,7 +344,6 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
       try {
         if (!voiceStatus.isPlaying) {
           // 開始播放
-          console.log('開始播放語音')
           voiceStatus.isPlaying = true
           voiceStatus.isPaused = false
           
@@ -363,12 +366,10 @@ ${props.letter.coreMessage ? `核心信息：\n${props.letter.coreMessage}` : ''
           }
         } else if (voiceStatus.isPaused) {
           // 恢復播放
-          console.log('恢復播放語音')
           speechService.resume()
           voiceStatus.isPaused = false
         } else {
           // 暫停播放
-          console.log('暫停播放語音')
           speechService.pause()
           voiceStatus.isPaused = true
         }

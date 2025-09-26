@@ -9,16 +9,20 @@ class SimplifiedAIService {
     this.model = 'gpt-4'
     this.maxRetries = 3
     this.timeout = 30000
-    
-    console.log('🤖 SimplifiedAIService 初始化完成')
+    this.isInitialized = false
+    this.init()
+  }
+
+  init() {
+    if (this.isInitialized) return
+    this.isInitialized = true
   }
 
   /**
    * 生成 AI 回應
    */
   async generateResponse(userInput) {
-    const requestId = this.generateRequestId();
-    console.log(`[${requestId}] 🚀 開始處理請求`)
+    const requestId = this.generateRequestId()
     
     try {
       // 主要服務
@@ -175,8 +179,6 @@ class SimplifiedAIService {
       temperature: 0.7
     }
 
-    console.log(`[${requestId}] 📡 發送 API 請求`)
-    
     const response = await fetch(this.baseURL, {
       method: 'POST',
       headers: {
@@ -191,7 +193,6 @@ class SimplifiedAIService {
     }
 
     const data = await response.json()
-    console.log(`[${requestId}] 📨 收到 API 回應`)
     
     return data.choices[0].message.content
   }
@@ -219,9 +220,23 @@ class SimplifiedAIService {
     } catch (error) {
       console.warn(`[${requestId}] ⚠️ JSON 解析失敗，嘗試正則提取`)
       
-      // 使用正則表達式提取內容
-      return this.extractWithRegex(response, requestId)
+      // 使用正則表達式提取結構化內容
+      const extractedContent = this.extractStructuredContent(response, requestId)
+      
+      if (extractedContent) {
+        return extractedContent
+      }
+      
+      // 如果正則提取失敗，嘗試其他方法
+      return this.createStructuredResponse(response)
     }
+  }
+
+  /**
+   * 提取結構化內容
+   */
+  extractStructuredContent(text, requestId) {
+    return this.extractWithRegex(text, requestId)
   }
 
   /**
@@ -264,8 +279,13 @@ class SimplifiedAIService {
           // 如果JSON解析失敗，使用原來的邏輯作為備用
           result.biblicalReferences = biblicalMatch[1]
             .split(',')
-            .map(ref => ref.trim().replace(/"/g, ''))
-            .filter(ref => ref.length > 0)
+            .map(ref => {
+              if (typeof ref === 'string') {
+                return ref.trim().replace(/"/g, '')
+              }
+              return String(ref).trim().replace(/"/g, '')
+            })
+            .filter(ref => ref && ref.length > 0)
         }
       } else {
         result.biblicalReferences = []
@@ -318,6 +338,38 @@ class SimplifiedAIService {
   }
 
   /**
+   * 創建備用回應
+   */
+  createFallbackResponse(userInput) {
+    return {
+      jesusLetter: `親愛的孩子，
+
+感謝你向我傾訴你的心聲。雖然現在可能無法給你完整的回應，但請記住，我永遠與你同在。
+
+無論你面對什麼困難或挑戰，都要相信我對你的愛是永恆不變的。在困難中尋求我，在喜樂中感謝我，在迷茫中信靠我。
+
+你的禱告我都聽見了，我會在最合適的時候回應你。請耐心等候，並繼續在信心中前行。
+
+願我的平安與你同在。
+
+愛你的主耶穌`,
+      guidedPrayer: `親愛的主耶穌，
+
+感謝你聆聽我的禱告。雖然現在我可能感到困惑或不安，但我相信你有最好的安排。
+
+請幫助我在等候中學習耐心，在困難中保持信心，在迷茫中尋求你的引導。
+
+求你賜給我智慧和力量，讓我能夠面對生活中的各種挑戰。
+
+奉主耶穌的名禱告，阿們。`,
+      biblicalReferences: [
+        "腓立比書 4:19 - 我的神必照他榮耀的豐富，在基督耶穌裡，使你們一切所需用的都充足。",
+        "詩篇 23:1 - 耶和華是我的牧者，我必不致缺乏。"
+      ]
+    }
+  }
+
+  /**
    * 驗證和增強回應
    */
   validateAndEnhanceResponse(response, userInput, requestId) {
@@ -343,7 +395,6 @@ class SimplifiedAIService {
     //   response.guidedPrayer += '\n\n奉耶穌的名禱告，阿們。'
     // }
 
-    console.log(`[${requestId}] ✅ 回應驗證和增強完成`)
     return response
   }
 

@@ -544,8 +544,6 @@ class ExportService {
       link.click()
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
-      
-      console.log(`✅ 文件下載成功: ${filename}`)
     } catch (error) {
       console.error('❌ 文件下載失敗:', error)
       throw error

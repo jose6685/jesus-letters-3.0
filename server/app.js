@@ -21,10 +21,20 @@ const __dirname = dirname(__filename)
 dotenv.config({ path: path.join(__dirname, '..', '.env') })
 
 const app = express()
-const PORT = 3002  // 固定使用 3002 端口作為後端服務器
+const PORT = process.env.PORT || 3001  // 使用環境變數或預設 3001 端口
 
 // 設置安全中間件
 setupSecurity(app)
+
+// CORS配置
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-domain.com', 'https://your-app.netlify.app']
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3003'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}
+app.use(cors(corsOptions))
 
 // 自定義中間件
 app.use(requestLogger)
@@ -51,19 +61,6 @@ app.get('/', (req, res) => {
     }
   })
 })
-
-// CORS配置
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.com', 'https://your-app.netlify.app']
-    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}
-app.use(cors(corsOptions))
-
-// 使用統一的安全中間件（包含速率限制）
-setupSecurity(app);
 
 // 基本中間件已在 setupSecurity 中配置
 

@@ -53,7 +53,7 @@ class StorageService {
         localStorage.setItem(this.statsKey, JSON.stringify(defaultStats))
       }
 
-      console.log('✅ 存儲服務初始化成功')
+
     } catch (error) {
       console.error('❌ 存儲服務初始化失敗:', error)
       this.useMemoryStorage = true
@@ -107,7 +107,6 @@ class StorageService {
       // 更新統計數據
       await this.updateStats(letterData.userInput.topic)
 
-      console.log(`✅ 對話記錄已保存: ${letterId}`)
       return letterId
 
     } catch (error) {
@@ -241,7 +240,6 @@ class StorageService {
       }
 
       await this.setItem(this.storageKey, filteredLetters)
-      console.log(`✅ 對話記錄已刪除: ${letterId}`)
       return true
 
     } catch (error) {
@@ -269,7 +267,6 @@ class StorageService {
       }
       await this.setItem(this.statsKey, defaultStats)
 
-      console.log('✅ 所有對話記錄已清空')
       return true
 
     } catch (error) {
@@ -386,7 +383,6 @@ class StorageService {
       const updatedSettings = { ...currentSettings, ...settings }
       
       await this.setItem(this.settingsKey, updatedSettings)
-      console.log('✅ 設置已保存')
       return true
 
     } catch (error) {
@@ -466,7 +462,6 @@ class StorageService {
         await this.saveSettings(importData.settings)
       }
 
-      console.log('✅ 數據匯入成功')
       return true
 
     } catch (error) {

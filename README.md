@@ -1,395 +1,361 @@
-# JesusLetter - AI-Powered Letter Writing Application
+# 耶穌的信 (Jesus Letter)
 
-A modern web application that helps users write personalized letters using AI assistance from Gemini and OpenAI.
+一個基於 Vue.js 和 Node.js 的 AI 驅動的基督教信仰應用，讓用戶可以向耶穌傾訴心聲並獲得充滿愛與智慧的回應。
 
-## Features
+## 功能特色
 
-- 🤖 AI-powered letter writing with Gemini and OpenAI integration
-- 📱 Responsive design with modern UI
-- 🔒 Secure API with rate limiting and CORS protection
-- 🚀 Easy deployment with Docker
-- ⚡ Fast development with Vite and Express
-- 📊 Health monitoring and logging
-- 🎯 Optimized performance with code splitting and caching
-- 🛡️ Enhanced security with Nginx and CSP headers
-- 📦 PWA support with offline capabilities
+- 🙏 **AI 信件生成**: 基於用戶輸入生成個人化的耶穌回信
+- 📖 **引導禱告**: 提供相應的禱告文本幫助用戶靈修
+- 📚 **聖經經文**: 自動匹配相關的聖經經文
+- 💾 **本地存儲**: 安全地保存對話記錄在本地
+- 🎵 **語音播放**: 支持文字轉語音功能
+- 📱 **PWA 支持**: 可安裝為手機應用
+- 🌙 **深色模式**: 支持明暗主題切換
+- 📤 **匯出功能**: 支持 PDF、Word、圖片等格式匯出
 
-## Tech Stack
+## 技術架構
 
-### Frontend
-- **Vite** - Fast build tool with optimized code splitting
-- **Vue.js** - Progressive JavaScript framework
-- **CSS3** - Modern styling with responsive design
-- **Service Worker** - PWA and offline capabilities
-- **Capacitor** - Cross-platform mobile deployment
+### 前端
+- **Vue 3** - 現代化的前端框架
+- **Vite** - 快速的構建工具
+- **PWA** - 漸進式網頁應用支持
+- **Speech API** - 語音合成功能
+- **Canvas API** - 圖片生成功能
 
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **Helmet** - Security middleware
-- **Express Rate Limit** - Rate limiting middleware
-- **CORS** - Cross-origin resource sharing
+### 後端
+- **Node.js** - 服務器運行環境
+- **Express.js** - Web 應用框架
+- **OpenAI API** - AI 文本生成
+- **Rate Limiting** - 請求頻率限制
+- **CORS** - 跨域資源共享
 
-### Infrastructure
-- **Nginx** - Reverse proxy with optimized caching
-- **Docker** - Containerized deployment
-- **Docker Compose** - Multi-container orchestration
+## 本地開發環境設置
 
-### AI Services
-- **Google Gemini API** - Advanced AI text generation
-- **OpenAI API** - GPT-powered text generation
+### 前置要求
 
-## Performance Optimizations
+- Node.js 16.0 或更高版本
+- npm 或 yarn 包管理器
+- OpenAI API 密鑰
 
-### Frontend Optimizations
-- **Code Splitting**: Automatic chunking for Vue, AI services, Capacitor, and utilities
-- **Asset Optimization**: Minification with Terser, CSS code splitting
-- **Caching Strategy**: Service Worker with intelligent caching
-- **Bundle Analysis**: Optimized dependencies and tree shaking
+### 安裝步驟
 
-### Backend Optimizations
-- **Rate Limiting**: Configurable limits for general and AI endpoints
-- **Security Headers**: Comprehensive security with Helmet
-- **Request Logging**: Structured logging with performance monitoring
-- **Error Handling**: Graceful error handling and recovery
-
-### Infrastructure Optimizations
-- **Nginx Caching**: Static assets cached for 1 year with immutable headers
-- **Gzip Compression**: Optimized compression for all text-based assets
-- **Security Headers**: HSTS, CSP, and other security enhancements
-- **Health Checks**: Comprehensive monitoring endpoints
-
-## Quick Start
-
-### Prerequisites
-- Node.js 18+ 
-- Docker and Docker Compose (for deployment)
-- API keys for Gemini and/or OpenAI
-
-### Development Setup
-
-1. **Clone the repository**
+1. **克隆項目**
    ```bash
    git clone <repository-url>
    cd JesusLtter
    ```
 
-2. **Install dependencies**
+2. **安裝前端依賴**
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
 
-3. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
-
-4. **Start development servers**
-   
-   Frontend (Terminal 1):
-   ```bash
-   npm run dev
-   ```
-   
-   Backend (Terminal 2):
+3. **安裝後端依賴**
    ```bash
    cd server
-   node app.js
+   npm install
    ```
 
-5. **Access the application**
-   - Frontend: http://localhost:3001
-   - Backend API: http://localhost:3002/api
-   - Health Check: http://localhost:3002/api/health
+4. **配置環境變量**
+   
+   在 `server` 目錄下創建 `.env` 文件：
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   PORT=3001
+   NODE_ENV=development
+   ```
 
-### Production Deployment
+### 本地啟動
 
-#### Using Docker (Recommended)
-
-1. **Quick deployment**
+1. **啟動後端服務器**
    ```bash
-   # On Windows
-   deploy.bat
-   
-   # On Linux/Mac
-   chmod +x deploy.sh
-   ./deploy.sh
+   cd server
+   npm start
    ```
+   後端服務將在 `http://localhost:3001` 運行
 
-2. **Manual Docker deployment**
+2. **啟動前端開發服務器**
    ```bash
-   # Build and start containers
-   docker-compose up --build -d
-   
-   # View logs
-   docker-compose logs -f
-   
-   # Stop containers
-   docker-compose down
+   # 在項目根目錄
+   npm run dev
    ```
+   前端應用將在 `http://localhost:5173` 運行
 
-#### Manual Deployment
+3. **訪問應用**
+   
+   打開瀏覽器訪問 `http://localhost:5173`
 
-1. **Build frontend**
+## 生產環境部署
+
+### Vercel 部署 (推薦)
+
+#### 前端部署
+
+1. **準備部署**
    ```bash
    npm run build
    ```
 
-2. **Start backend**
+2. **Vercel CLI 部署**
    ```bash
-   cd server
-   NODE_ENV=production node app.js
+   # 安裝 Vercel CLI
+   npm i -g vercel
+   
+   # 登錄 Vercel
+   vercel login
+   
+   # 部署
+   vercel --prod
    ```
 
-3. **Serve with Nginx (Recommended)**
-   Use the provided `nginx.conf` for optimized performance:
-   - Static asset caching (1 year)
-   - Gzip compression
-   - Security headers
-   - API proxy to backend
+3. **GitHub 自動部署**
+   - 將代碼推送到 GitHub
+   - 在 Vercel 控制台連接 GitHub 倉庫
+   - 配置自動部署
 
-## Performance Monitoring
+#### 後端部署
 
-### Frontend Performance
-- **Bundle Analysis**: Use `npm run build` to see chunk sizes
-- **Lighthouse**: Run audits for performance, accessibility, and SEO
-- **Service Worker**: Monitor cache hit rates in DevTools
+1. **創建 `vercel.json` 配置**
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "server/app.js",
+         "use": "@vercel/node"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/api/(.*)",
+         "dest": "server/app.js"
+       }
+     ],
+     "env": {
+       "OPENAI_API_KEY": "@openai-api-key"
+     }
+   }
+   ```
 
-### Backend Performance
-- **Health Endpoints**: 
-  - `/api/health` - Basic health check
-  - `/api/health/detailed` - Detailed system information
-- **Request Logging**: Structured logs with timing information
-- **Rate Limiting**: Monitor API usage and limits
+2. **設置環境變量**
+   ```bash
+   vercel env add OPENAI_API_KEY
+   ```
 
-### Infrastructure Monitoring
-- **Nginx Logs**: Access and error logs for traffic analysis
-- **Docker Stats**: Container resource usage monitoring
-- **Cache Performance**: Monitor Nginx cache hit rates
+3. **部署後端**
+   ```bash
+   cd server
+   vercel --prod
+   ```
 
-## Environment Variables
+### 其他部署選項
 
-Create a `.env` file in the root directory:
+#### Netlify 部署
 
-```env
-# Application Configuration
-APP_NAME=JesusLetter
-APP_VERSION=1.0.0
-NODE_ENV=development
-PORT=3002
+1. **構建前端**
+   ```bash
+   npm run build
+   ```
 
-# AI Service API Keys
-GEMINI_API_KEY=your-gemini-api-key-here
-OPENAI_API_KEY=your-openai-api-key-here
+2. **部署到 Netlify**
+   - 將 `dist` 目錄上傳到 Netlify
+   - 或連接 GitHub 倉庫自動部署
 
-# Server Configuration
-CORS_ORIGIN=http://localhost:3001
-JWT_SECRET=your-jwt-secret-key-here
+#### 傳統服務器部署
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+1. **構建應用**
+   ```bash
+   npm run build
+   ```
 
-# Logging
-LOG_LEVEL=info
+2. **配置 Nginx**
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+       
+       location / {
+           root /path/to/dist;
+           try_files $uri $uri/ /index.html;
+       }
+       
+       location /api {
+           proxy_pass http://localhost:3001;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
 
-# Frontend Configuration
-VITE_API_BASE_URL=http://localhost:3002/api
-VITE_APP_NAME=JesusLetter
-VITE_APP_VERSION=1.0.0
-```
+3. **使用 PM2 管理後端進程**
+   ```bash
+   npm install -g pm2
+   cd server
+   pm2 start app.js --name "jesus-letter-api"
+   ```
 
-## API Endpoints
+## 環境變量配置
 
-### Health Check
-- `GET /api/health` - Application health status
+### 後端環境變量
 
-### AI Services
-- `GET /api/ai/status` - AI services status
-- `POST /api/ai/generate` - Generate AI content
+| 變量名 | 描述 | 默認值 | 必需 |
+|--------|------|--------|------|
+| `OPENAI_API_KEY` | OpenAI API 密鑰 | - | ✅ |
+| `PORT` | 服務器端口 | 3001 | ❌ |
+| `NODE_ENV` | 運行環境 | development | ❌ |
+| `CORS_ORIGIN` | 允許的跨域來源 | * | ❌ |
+| `RATE_LIMIT_WINDOW` | 速率限制時間窗口(分鐘) | 15 | ❌ |
+| `RATE_LIMIT_MAX` | 速率限制最大請求數 | 100 | ❌ |
 
-## Project Structure
+### 前端環境變量
+
+| 變量名 | 描述 | 默認值 | 必需 |
+|--------|------|--------|------|
+| `VITE_API_BASE_URL` | 後端 API 基礎 URL | http://localhost:3001 | ❌ |
+
+## 項目結構
 
 ```
 JesusLtter/
-├── src/                    # Frontend source code
-│   ├── config/            # Configuration files
-│   ├── js/                # JavaScript modules
-│   ├── css/               # Stylesheets
-│   └── index.html         # Main HTML file
-├── server/                # Backend source code
-│   ├── middleware/        # Express middleware
-│   ├── routes/           # API routes
-│   └── app.js            # Main server file
-├── dist/                 # Built frontend files
-├── docker-compose.yml    # Docker Compose configuration
-├── Dockerfile.frontend   # Frontend Docker configuration
-├── Dockerfile.backend    # Backend Docker configuration
-├── nginx.conf           # Nginx configuration
-├── deploy.sh            # Linux/Mac deployment script
-├── deploy.bat           # Windows deployment script
-└── package.json         # Node.js dependencies
+├── public/                 # 靜態資源
+│   ├── icons/             # PWA 圖標
+│   └── manifest.json      # PWA 配置
+├── src/                   # 前端源碼
+│   ├── components/        # Vue 組件
+│   ├── services/          # 服務層
+│   ├── styles/           # 樣式文件
+│   └── main.js           # 入口文件
+├── server/               # 後端源碼
+│   ├── routes/           # 路由處理
+│   ├── middleware/       # 中間件
+│   └── app.js           # 服務器入口
+├── dist/                # 構建輸出
+└── package.json         # 項目配置
 ```
 
-## Development
+## API 文檔
 
-### Available Scripts
+### 生成信件
 
-- `npm run dev` - Start frontend development server
-- `npm run build` - Build frontend for production
-- `npm run preview` - Preview production build
-- `npm run server` - Start backend server
+**POST** `/api/generate`
 
-### Code Style
+**請求體:**
+```json
+{
+  "userInput": "用戶的禱告或心聲"
+}
+```
 
-- Use ES6+ features
-- Follow consistent naming conventions
-- Add comments for complex logic
-- Use meaningful variable and function names
+**響應:**
+```json
+{
+  "aiResponse": {
+    "jesusLetter": "耶穌的回信內容",
+    "guidedPrayer": "引導禱告內容",
+    "biblicalReferences": ["相關聖經經文"]
+  }
+}
+```
 
-## Security Features
+### 健康檢查
 
-- **Helmet.js** - Sets various HTTP headers for security
-- **CORS** - Configurable cross-origin resource sharing
-- **Rate Limiting** - Prevents API abuse
-- **Input Validation** - Validates and sanitizes user input
-- **Environment Variables** - Sensitive data protection
+**GET** `/api/health`
 
-## Monitoring and Logging
+**響應:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
 
-- **Morgan** - HTTP request logging
-- **Health Check Endpoint** - Application status monitoring
-- **Error Handling** - Comprehensive error handling and logging
-- **Docker Health Checks** - Container health monitoring
+## 開發指南
 
-## Troubleshooting
+### 代碼規範
 
-### Common Issues
+- 使用 ESLint 進行代碼檢查
+- 遵循 Vue.js 官方風格指南
+- 使用 Prettier 進行代碼格式化
 
-1. **Port conflicts**
-   - Frontend runs on port 3001, backend on port 3002
-   - Change ports in `.env` file if needed
-   - Kill processes using the ports: `netstat -ano | findstr :3001`
+### 提交規範
 
-2. **API key errors**
-   - Verify API keys in `.env` file
-   - Check API key permissions and quotas
-   - Ensure proper environment variable loading
+使用 Conventional Commits 格式：
+```
+feat: 新功能
+fix: 修復問題
+docs: 文檔更新
+style: 代碼格式調整
+refactor: 代碼重構
+test: 測試相關
+chore: 構建或輔助工具變動
+```
 
-3. **Docker issues**
-   - Ensure Docker is running
-   - Check Docker Compose version compatibility
-   - Use `docker-compose logs` to debug container issues
-
-4. **Build errors**
-   - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-   - Check Node.js version compatibility (18+)
-   - Verify all dependencies are properly installed
-
-5. **Module import errors**
-   - Ensure ES6 modules are properly configured
-   - Check file extensions and import paths
-   - Verify export/import syntax consistency
-
-6. **Performance issues**
-   - Monitor bundle sizes with `npm run build`
-   - Check network requests in DevTools
-   - Verify service worker caching is working
-
-### Debug Commands
+### 測試
 
 ```bash
-# Check running processes
-netstat -ano | findstr :3001
-netstat -ano | findstr :3002
+# 運行前端測試
+npm run test
 
-# View Docker logs
-docker-compose logs -f
-
-# Check Node.js version
-node --version
-
-# Verify environment variables
-node -e "console.log(process.env)"
-
-# Test API endpoints
-curl http://localhost:3002/api/health
-curl http://localhost:3002/api/ai/status
+# 運行後端測試
+cd server
+npm test
 ```
 
-### Performance Optimization Tips
+## 故障排除
 
-1. **Frontend Optimization**
-   - Enable service worker for caching
-   - Use code splitting for large components
-   - Optimize images and assets
-   - Monitor Core Web Vitals
+### 常見問題
 
-2. **Backend Optimization**
-   - Implement proper error handling
-   - Use rate limiting to prevent abuse
-   - Monitor API response times
-   - Optimize database queries if applicable
+1. **API 請求失敗**
+   - 檢查 OpenAI API 密鑰是否正確
+   - 確認後端服務是否正常運行
+   - 檢查網絡連接
 
-3. **Infrastructure Optimization**
-   - Use Nginx for static file serving
-   - Enable gzip compression
-   - Implement proper caching headers
-   - Monitor server resources
+2. **PWA 安裝問題**
+   - 確保使用 HTTPS 協議
+   - 檢查 manifest.json 配置
+   - 清除瀏覽器緩存
 
-## Contributing
+3. **語音播放不工作**
+   - 檢查瀏覽器是否支持 Speech API
+   - 確認用戶已授權音頻播放
+   - 嘗試不同的瀏覽器
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and test thoroughly
-4. Commit your changes: `git commit -m 'Add feature'`
-5. Push to the branch: `git push origin feature-name`
-6. Submit a pull request
+### 日誌查看
 
-## License
+```bash
+# 查看後端日誌
+cd server
+npm run logs
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+# 查看 PM2 日誌
+pm2 logs jesus-letter-api
+```
 
-## Support
+## 貢獻指南
 
-For support and questions:
-- Create an issue on GitHub
-- Check the troubleshooting section above
-- Review the API documentation
+1. Fork 項目
+2. 創建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 創建 Pull Request
 
-## Changelog
+## 許可證
 
-### Version 1.0.0
-- Initial release with AI-powered letter writing
-- Gemini and OpenAI integration
-- Responsive web interface
-- Docker deployment support
-- Performance optimizations
-- Security enhancements
+本項目採用 MIT 許可證 - 查看 [LICENSE](LICENSE) 文件了解詳情。
 
-- **Development**: Check browser console and terminal output
-- **Production**: Use `docker-compose logs -f` for container logs
+## 聯繫方式
 
-## Contributing
+如有問題或建議，請通過以下方式聯繫：
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+- 創建 GitHub Issue
+- 發送郵件至 [your-email@example.com]
 
-## License
+## 致謝
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-- Check the troubleshooting section
-- Review the logs for error messages
-- Open an issue on the repository
+- OpenAI 提供的 GPT API
+- Vue.js 社區的優秀工具和資源
+- 所有貢獻者的支持和幫助
 
 ---
 
-Made with ❤️ for better communication through AI-assisted letter writing.
+願神祝福這個項目，讓更多人能夠感受到主的愛與恩典。🙏

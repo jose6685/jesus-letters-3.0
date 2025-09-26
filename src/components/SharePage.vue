@@ -184,24 +184,24 @@ export default {
 
         // 檢查 HTTP 狀態碼
         if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`HTTP錯誤 ${response.status}: ${errorText}`)
+          const errorData = await response.json()
+          throw new Error(`HTTP錯誤 ${response.status}: ${errorData.error || '未知錯誤'}`)
         }
 
         const result = await response.json()
 
-        // 根據朋友建議：檢查後端回應的 success 狀態
-        if (!result.success) {
-          throw new Error(`後端錯誤：${result.error || result.data?.error || '未知錯誤'}`)
+        // 根據朋友建議：檢查是否有 error 欄位
+        if (result.error) {
+          throw new Error(`後端錯誤：${result.error}`)
         }
 
         // 檢查數據結構是否正確
-        if (!result.data || !result.data.aiResponse) {
+        if (!result.aiResponse) {
           throw new Error('AI 回應格式不正確')
         }
 
         // 從正確的數據結構中提取AI響應
-        const aiResponse = result.data.aiResponse
+        const aiResponse = result.aiResponse
 
         // 驗證必要欄位
         if (!aiResponse.jesusLetter || !aiResponse.guidedPrayer) {
@@ -230,19 +230,22 @@ export default {
       } catch (error) {
         console.error('發送信件失敗:', error)
         
-        // 根據朋友建議：更精確的錯誤處理
-        if (error.message.includes('HTTP錯誤')) {
-          alert(`請求失敗：${error.message}`)
+        // 根據朋友建議：三種狀況處理
+        if (!response || !response.ok) {
+          // 狀況1：res.ok === false → 顯示 HTTP 錯誤
+          alert(`HTTP 錯誤：${error.message}`)
         } else if (error.message.includes('後端錯誤')) {
-          alert(`伺服器錯誤：${error.message}`)
-        } else if (error.message.includes('AI 回應')) {
-          alert(`AI 處理錯誤：${error.message}`)
-        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          alert('發送失敗，請檢查網絡連接後重試')
-        } else if (error.message.includes('JSON')) {
-          alert('伺服器回應格式錯誤，請稍後再試')
+          // 狀況2：data.error 存在 → 顯示 AI 錯誤
+          alert(`AI 錯誤：${error.message}`)
         } else {
-          alert(`請求失敗：${error.message}`)
+          // 狀況3：其餘 → 正常顯示錯誤訊息
+          if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            alert('網路連接失敗，請檢查網路後重試')
+          } else if (error.message.includes('JSON')) {
+            alert('伺服器回應格式錯誤，請稍後再試')
+          } else {
+            alert(`請求失敗：${error.message}`)
+          }
         }
       } finally {
         isSubmitting.value = false
@@ -269,10 +272,15 @@ export default {
           }
           // 如果是字符串，進一步處理可能的 JSON 格式
           if (typeof ref === 'string') {
-            return parseStringReference(ref)
+            const parsed = parseStringReference(ref)
+            // parseStringReference 可能返回數組，需要展開
+            if (Array.isArray(parsed)) {
+              return parsed
+            }
+            return parsed
           }
           return String(ref)
-        }).filter(ref => ref && ref.trim().length > 0)
+        }).flat().filter(ref => ref && typeof ref === 'string' && ref.trim().length > 0)
       }
       
       // 如果是字符串，嘗試解析
@@ -375,7 +383,7 @@ export default {
           .filter(ref => ref.length > 0 && !ref.match(/^[\{\}",:\s]*$/)) // 過濾掉只包含 JSON 符號的行
       }
       
-      return [str.trim()].filter(ref => ref.length > 0)
+      return [str.trim()].filter(ref => ref && ref.length > 0)
     }
 
     // 生成唯一ID

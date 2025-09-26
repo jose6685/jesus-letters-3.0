@@ -371,7 +371,6 @@ class BackendAIService {
   parseResponse(response, requestId) {
     try {
       console.log(`[${requestId}] 🔍 開始解析AI回應`)
-      console.log(`[${requestId}] 📝 原始回應:`, response)
       
       // 檢查是否為分段響應並進行累積處理
       let accumulatedResponse = this.accumulateJsonChunks(response, requestId)
@@ -388,19 +387,14 @@ class BackendAIService {
       // 移除可能的前綴文字（如英文開頭）
       const jsonStartIndex = cleanedResponse.indexOf('{')
       if (jsonStartIndex > 0) {
-        console.log(`[${requestId}] ⚠️ 發現JSON前有額外文字，移除前綴`)
-        console.log(`[${requestId}] 📝 前綴內容:`, cleanedResponse.substring(0, jsonStartIndex))
         cleanedResponse = cleanedResponse.substring(jsonStartIndex)
       }
       
       // 找到JSON結束位置，移除後面的多餘內容
       const jsonEndIndex = cleanedResponse.lastIndexOf('}')
       if (jsonEndIndex > 0 && jsonEndIndex < cleanedResponse.length - 1) {
-        console.log(`[${requestId}] ⚠️ 發現JSON後有額外文字，移除後綴`)
         cleanedResponse = cleanedResponse.substring(0, jsonEndIndex + 1)
       }
-      
-      console.log(`[${requestId}] 📝 清理後的回應:`, cleanedResponse)
       
       // 找到最後一個完整的JSON對象
       const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/)
@@ -408,9 +402,11 @@ class BackendAIService {
         let jsonStr = jsonMatch[0]
         
         // 修復常見的JSON格式問題
-        jsonStr = this.fixJsonFormat(jsonStr, requestId)
-        
-        console.log(`[${requestId}] 📝 修復後的JSON:`, jsonStr)
+        try {
+          jsonStr = this.fixJsonFormat(jsonStr, requestId)
+        } catch (fixError) {
+          console.error(`[${requestId}] JSON修復失敗:`, fixError.message)
+        }
         
         const parsed = JSON.parse(jsonStr)
         console.log(`[${requestId}] ✅ JSON解析成功`)
@@ -432,8 +428,6 @@ class BackendAIService {
 
   // 新增方法：累積和處理分段 JSON 響應
   accumulateJsonChunks(response, requestId) {
-    console.log(`[${requestId}] 🔗 檢查是否為分段響應`)
-    
     // 檢查是否包含分段標識符
     const hasJesusLetterChunk = response.includes('"jesusLetter"') && !response.includes('"guidedPrayer"')
     const hasGuidedPrayerChunk = response.includes('"guidedPrayer"') && !response.includes('"biblicalReferences"')
@@ -481,9 +475,10 @@ class BackendAIService {
     
     const biblicalReferencesMatch = response.match(/"biblicalReferences"[:\s]*\[([^\]]*)\]/s)
     if (biblicalReferencesMatch) {
-      const refs = biblicalReferencesMatch[1].match(/"([^"]*)"/g)
-      if (refs) {
-        biblicalReferences = refs.map(ref => ref.replace(/"/g, ''))
+      try {
+        biblicalReferences = JSON.parse(`[${biblicalReferencesMatch[1]}]`)
+      } catch (e) {
+        biblicalReferences = []
       }
     }
     
@@ -492,22 +487,20 @@ class BackendAIService {
       coreMessage = coreMessageMatch[1] || ''
     }
     
-    // 構建完整的 JSON 字符串
+    // 構建完整的 JSON 對象
     const completeJson = {
-      jesusLetter: jesusLetter || '親愛的朋友，我聽見了你的心聲，我愛你，我與你同在。',
-      guidedPrayer: guidedPrayer || '親愛的天父，感謝你的愛和恩典，求你賜給我們平安和力量。',
-      biblicalReferences: biblicalReferences.length > 0 ? biblicalReferences : ['約翰福音 3:16'],
-      coreMessage: coreMessage || '神愛你，祂必與你同在'
+      jesusLetter,
+      guidedPrayer,
+      biblicalReferences,
+      coreMessage
     }
     
     console.log(`[${requestId}] ✅ 成功重構完整 JSON`)
-    return JSON.stringify(completeJson)
+    return completeJson
   }
 
   // 補全不完整的 JSON
   completeIncompleteJson(response, requestId) {
-    console.log(`[${requestId}] 🔧 補全不完整的 JSON`)
-    
     let completedJson = response.trim()
     
     // 確保所有字符串字段都有結束引號
@@ -541,13 +534,9 @@ class BackendAIService {
   }
 
   fixJsonFormat(jsonStr, requestId) {
-    console.log(`[${requestId}] 🔧 修復JSON格式`)
-    console.log(`[${requestId}] 📝 原始JSON字符串:`, jsonStr.substring(0, 200) + '...')
-    
     try {
       // 首先嘗試解析，如果成功就直接返回
       JSON.parse(jsonStr)
-      console.log(`[${requestId}] ✅ JSON格式正確，無需修復`)
       return jsonStr
     } catch (error) {
       console.log(`[${requestId}] ⚠️ JSON格式有問題，開始修復:`, error.message)
@@ -600,17 +589,12 @@ class BackendAIService {
       return `: "${trimmedValue}"`
     })
     
-    console.log(`[${requestId}] 🔧 JSON修復完成`)
-    console.log(`[${requestId}] 📝 修復後JSON字符串:`, jsonStr.substring(0, 200) + '...')
-    
     // 最終驗證
     try {
       JSON.parse(jsonStr)
-      console.log(`[${requestId}] ✅ JSON修復成功`)
       return jsonStr
     } catch (error) {
       console.log(`[${requestId}] ❌ JSON修復失敗:`, error.message)
-      console.log(`[${requestId}] 📝 修復失敗的JSON:`, jsonStr)
       // 如果修復失敗，返回原始字符串讓後續處理
       return originalStr
     }
@@ -619,61 +603,82 @@ class BackendAIService {
   extractStructuredContent(response, requestId) {
     console.log(`[${requestId}] 🔧 嘗試手動提取結構化內容`)
     
-    try {
-      // 嘗試從文本中提取各個部分
-      let jesusLetter = ''
-      let guidedPrayer = ''
-      let biblicalReferences = []
-      let coreMessage = ''
-      
-      // 查找jesusLetter部分
-      const jesusLetterMatch = response.match(/"jesusLetter":\s*"([^"]*(?:\\.[^"]*)*)"/)
-      if (jesusLetterMatch) {
-        jesusLetter = jesusLetterMatch[1]
-          .replace(/\\n\\n/g, '') // 完全刪除雙換行符
-          .replace(/\\n/g, '\n')  // 轉換單換行符
-          .replace(/\\"/g, '"')   // 轉換引號
+    // 嘗試提取 jesusLetter 內容
+    let jesusLetter = ''
+    const letterPatterns = [
+      /親愛的[^，]*，([\s\S]*?)(?=引導禱告|禱告|聖經|參考|$)/i,
+      /dear[^,]*,([\s\S]*?)(?=guided prayer|prayer|biblical|reference|$)/i,
+      /"jesusLetter"[:\s]*"([^"]*(?:\\.[^"]*)*)"/s,
+      /耶穌的信[：:]([\s\S]*?)(?=引導禱告|禱告|聖經|參考|$)/i
+    ]
+    
+    for (const pattern of letterPatterns) {
+      const match = response.match(pattern)
+      if (match && match[1] && match[1].trim().length > 10) {
+        jesusLetter = match[1].trim()
+        break
       }
-      
-      // 查找guidedPrayer部分
-      const guidedPrayerMatch = response.match(/"guidedPrayer":\s*"([^"]*(?:\\.[^"]*)*)"/)
-      if (guidedPrayerMatch) {
-        guidedPrayer = guidedPrayerMatch[1]
-          .replace(/\\n\\n/g, '') // 完全刪除雙換行符
-          .replace(/\\n/g, '\n')  // 轉換單換行符
-          .replace(/\\"/g, '"')   // 轉換引號
+    }
+    
+    // 嘗試提取 guidedPrayer 內容
+    let guidedPrayer = ''
+    const prayerPatterns = [
+      /引導禱告[：:]([\s\S]*?)(?=聖經|參考|$)/i,
+      /guided prayer[：:]?([\s\S]*?)(?=biblical|reference|$)/i,
+      /"guidedPrayer"[:\s]*"([^"]*(?:\\.[^"]*)*)"/s,
+      /禱告[：:]([\s\S]*?)(?=聖經|參考|$)/i
+    ]
+    
+    for (const pattern of prayerPatterns) {
+      const match = response.match(pattern)
+      if (match && match[1] && match[1].trim().length > 5) {
+        guidedPrayer = match[1].trim()
+        break
       }
-      
-      // 查找biblicalReferences部分
-      const biblicalReferencesMatch = response.match(/"biblicalReferences":\s*\[(.*?)\]/)
-      if (biblicalReferencesMatch) {
-        const refs = biblicalReferencesMatch[1].match(/"([^"]*)"/g)
-        if (refs) {
-          biblicalReferences = refs.map(ref => ref.replace(/"/g, ''))
+    }
+    
+    // 嘗試提取聖經參考
+    let biblicalReferences = []
+    const refPatterns = [
+      /聖經參考[：:]?([\s\S]*?)$/i,
+      /biblical references?[：:]?([\s\S]*?)$/i,
+      /"biblicalReferences"[:\s]*\[([^\]]*)\]/s,
+      /參考經文[：:]?([\s\S]*?)$/i
+    ]
+    
+    for (const pattern of refPatterns) {
+      const match = response.match(pattern)
+      if (match && match[1]) {
+        const refs = match[1].match(/[a-zA-Z\u4e00-\u9fff]+\s*\d+[:\d\-,\s]*/g)
+        if (refs && refs.length > 0) {
+          biblicalReferences = refs.map(ref => ref.trim()).filter(ref => ref.length > 0)
+          break
         }
       }
-      
-      // 查找coreMessage部分
-      const coreMessageMatch = response.match(/"coreMessage":\s*"([^"]*(?:\\.[^"]*)*)"/)
-      if (coreMessageMatch) {
-        coreMessage = coreMessageMatch[1]
-          .replace(/\\n\\n/g, '') // 完全刪除雙換行符
-          .replace(/\\n/g, '\n')  // 轉換單換行符
-          .replace(/\\"/g, '"')   // 轉換引號
-      }
-      
-      console.log(`[${requestId}] ✅ 手動提取結構化內容成功`)
-      return {
-        jesusLetter: jesusLetter || '親愛的朋友，我聽見了你的心聲，我愛你，我與你同在。',
-        guidedPrayer: guidedPrayer || '親愛的天父，感謝你的愛和恩典，求你賜給我們平安和力量。',
-        biblicalReferences: biblicalReferences.length > 0 ? biblicalReferences : ['約翰福音 3:16'],
-        coreMessage: coreMessage || '神愛你，祂必與你同在'
-      }
-      
-    } catch (error) {
-      console.error(`[${requestId}] ❌ 手動提取失敗:`, error.message)
-      return this.createStructuredResponse(response)
     }
+    
+    // 如果沒有找到足夠的內容，使用預設值
+    if (!jesusLetter || jesusLetter.length < 10) {
+      jesusLetter = '親愛的朋友，我聽見了你的心聲，我愛你，我與你同在。'
+    }
+    
+    if (!guidedPrayer || guidedPrayer.length < 5) {
+      guidedPrayer = '親愛的天父，感謝你的愛和恩典，求你賜給我們平安和力量。阿們。'
+    }
+    
+    if (biblicalReferences.length === 0) {
+      biblicalReferences = ['約翰福音 3:16']
+    }
+    
+    const result = {
+      jesusLetter,
+      guidedPrayer,
+      biblicalReferences,
+      coreMessage: '神愛你，祂必與你同在'
+    }
+    
+    console.log(`[${requestId}] ✅ 手動提取結構化內容成功`)
+    return result
   }
 
   extractContentFromText(text) {
@@ -695,6 +700,8 @@ class BackendAIService {
   }
 
   validateAndEnhanceResponse(response, userInput, requestId) {
+    console.log(`[${requestId}] ✅ 驗證AI回應格式`)
+    
     const { nickname } = userInput
 
     // 確保必要欄位存在
@@ -964,8 +971,7 @@ router.post('/generate', async (req, res, next) => {
     if (!userInput || !userInput.nickname || !userInput.situation || !userInput.topic) {
       return res.status(400).json({
         error: '缺少必要欄位',
-        required: ['nickname', 'situation', 'topic'],
-        received: Object.keys(userInput || {})
+        details: `需要: nickname, situation, topic，收到: ${Object.keys(userInput || {}).join(', ')}`
       })
     }
 
@@ -973,8 +979,7 @@ router.post('/generate', async (req, res, next) => {
     if (userInput.situation.length > 2000) {
       return res.status(400).json({
         error: '情況描述過長',
-        maxLength: 2000,
-        currentLength: userInput.situation.length
+        details: `最大長度: 2000，目前長度: ${userInput.situation.length}`
       })
     }
 
@@ -1000,21 +1005,17 @@ router.post('/generate', async (req, res, next) => {
     } catch (aiError) {
       console.error('❌ AI 服務錯誤:', aiError.message)
       
-      // 根據朋友建議：不管 AI 回傳什麼，都要修正成乾淨 JSON 再送給前端
-      aiResponse = {
-        error: 'AI 回傳格式錯誤',
-        details: aiError.message,
-        fallback: true
-      }
+      // 根據朋友建議：AI 錯誤時返回標準錯誤格式
+      return res.status(500).json({
+        error: 'AI 服務錯誤',
+        details: aiError.message
+      })
     }
 
-    // 確保回應總是有效的 JSON 格式
+    // 成功時返回標準格式
     const response = {
-      success: !aiResponse.error,
-      data: aiResponse.error ? aiResponse : {
-        userInput,
-        aiResponse
-      },
+      userInput,
+      aiResponse,
       timestamp: new Date().toISOString()
     }
 
@@ -1038,19 +1039,16 @@ router.get('/status', (req, res) => {
   try {
     const status = aiService.getServiceStatus()
     
-    res.json({
-      success: true,
-      data: {
-        ...status,
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-      }
+    return res.status(200).json({
+      ...status,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
     })
   } catch (error) {
     console.error('❌ 獲取AI狀態失敗:', error)
-    res.status(500).json({
+    return res.status(500).json({
       error: '獲取服務狀態失敗',
-      timestamp: new Date().toISOString()
+      details: error.message
     })
   }
 })
@@ -1069,19 +1067,19 @@ router.post('/test', async (req, res, next) => {
     const aiResponse = await aiService.generateResponse(testInput)
     const responseTime = Date.now() - startTime
 
-    res.json({
-      success: true,
-      data: {
-        testResult: 'AI服務正常',
-        responseTime: `${responseTime}ms`,
-        aiService: aiResponse.metadata?.aiService || 'unknown',
-        timestamp: new Date().toISOString()
-      }
+    return res.status(200).json({
+      testResult: 'AI服務正常',
+      responseTime: `${responseTime}ms`,
+      aiService: aiResponse.metadata?.aiService || 'unknown',
+      timestamp: new Date().toISOString()
     })
 
   } catch (error) {
     console.error('❌ AI測試失敗:', error)
-    next(error)
+    return res.status(500).json({
+      error: 'AI測試失敗',
+      details: error.message
+    })
   }
 })
 
@@ -1090,7 +1088,7 @@ app.use('/api/ai', router)
 
 // 根路由
 app.get('/', (req, res) => {
-  res.json({
+  return res.status(200).json({
     message: '耶穌的信 3.0 AI API 服務',
     version: '3.0.0',
     status: 'running',
@@ -1105,7 +1103,7 @@ app.get('/', (req, res) => {
 
 // 健康檢查路由
 app.get('/health', (req, res) => {
-  res.json({
+  return res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'AI API'
@@ -1115,46 +1113,18 @@ app.get('/health', (req, res) => {
 // 錯誤處理中間件
 app.use((error, req, res, next) => {
   console.error('❌ 伺服器錯誤:', error)
-  res.status(500).json({
+  return res.status(500).json({
     error: '內部伺服器錯誤',
-    message: process.env.NODE_ENV === 'development' ? error.message : '請稍後再試'
+    details: process.env.NODE_ENV === 'development' ? error.message : '請稍後再試'
   })
 })
 
 // 404 處理
 app.use('*', (req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     error: '找不到請求的資源',
-    path: req.originalUrl
+    details: `路徑: ${req.originalUrl}`
   })
 })
 
-// 配置埠號 - 優先使用 Render 提供的 PORT 環境變數
-const PORT = process.env.PORT || 3002
-
-// 啟動伺服器
-const server = app.listen(PORT, () => {
-  console.log(`✅ 伺服器已成功啟動，正在監聽埠號 ${PORT}`)
-  console.log('準備好接收來自前端的請求了！')
-  console.log(`🌐 API 端點: http://localhost:${PORT}/api/ai`)
-  console.log(`🔍 健康檢查: http://localhost:${PORT}/health`)
-})
-
-// 優雅關閉處理
-process.on('SIGTERM', () => {
-  console.log('📡 收到 SIGTERM 信號，正在優雅關閉伺服器...')
-  server.close(() => {
-    console.log('✅ 伺服器已成功關閉')
-    process.exit(0)
-  })
-})
-
-process.on('SIGINT', () => {
-  console.log('📡 收到 SIGINT 信號，正在優雅關閉伺服器...')
-  server.close(() => {
-    console.log('✅ 伺服器已成功關閉')
-    process.exit(0)
-  })
-})
-
-export default app
+export default router
