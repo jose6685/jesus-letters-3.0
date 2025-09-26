@@ -1082,39 +1082,18 @@ router.post('/test', async (req, res, next) => {
   }
 })
 
-// 將路由掛載到應用程式
-app.use('/api/ai', router)
-
-// 根路由
-app.get('/', (req, res) => {
+// 根路由 - 提供 API 資訊
+router.get('/', (req, res) => {
   return res.status(200).json({
     message: '耶穌的信 3.0 AI API 服務',
     version: '3.0.0',
     status: 'running',
     timestamp: new Date().toISOString(),
     endpoints: {
-      generate: '/api/ai/generate',
-      status: '/api/ai/status',
-      test: '/api/ai/test'
+      generate: '/generate',
+      status: '/status',
+      test: '/test'
     }
-  })
-})
-
-// 健康檢查路由
-app.get('/health', (req, res) => {
-  return res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'AI API'
-  })
-})
-
-// 錯誤處理中間件
-app.use((error, req, res, next) => {
-  console.error('❌ 伺服器錯誤:', error)
-  return res.status(500).json({
-    error: '內部伺服器錯誤',
-    details: process.env.NODE_ENV === 'development' ? error.message : '請稍後再試'
   })
 })
 
