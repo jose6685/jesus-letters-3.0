@@ -78,9 +78,9 @@ export const API_CONFIG = {
   // API端點
   ENDPOINTS: {
     // AI服務
-    AI_GENERATE: '/api/ai/generate',
-    AI_STATUS: '/api/ai/status',
-    AI_TEST: '/api/ai/test',
+    AI_GENERATE: '/ai/generate',
+    AI_STATUS: '/ai/status',
+    AI_TEST: '/ai/test',
     
     // 健康檢查
     HEALTH: '/health',

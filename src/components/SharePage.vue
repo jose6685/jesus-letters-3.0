@@ -161,6 +161,7 @@ export default {
       if (!isFormValid.value || isSubmitting.value) return
 
       isSubmitting.value = true
+      let response = null // 在函數開始時聲明 response 變量
 
       try {
         // 準備發送數據
@@ -174,7 +175,7 @@ export default {
         }
 
         // 發送到後端API
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_GENERATE}`, {
+        response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_GENERATE}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -184,8 +185,8 @@ export default {
 
         // 檢查 HTTP 狀態碼
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(`HTTP錯誤 ${response.status}: ${errorData.error || '未知錯誤'}`)
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(`HTTP錯誤 ${response.status}: ${errorData.error || '端點不存在'}`)
         }
 
         const result = await response.json()
@@ -231,9 +232,9 @@ export default {
         console.error('發送信件失敗:', error)
         
         // 根據朋友建議：三種狀況處理
-        if (!response || !response.ok) {
+        if (response && !response.ok) {
           // 狀況1：res.ok === false → 顯示 HTTP 錯誤
-          alert(`HTTP 錯誤：${error.message}`)
+          alert(`發送信件失敗: Error: ${error.message}`)
         } else if (error.message.includes('後端錯誤')) {
           // 狀況2：data.error 存在 → 顯示 AI 錯誤
           alert(`AI 錯誤：${error.message}`)
@@ -244,7 +245,7 @@ export default {
           } else if (error.message.includes('JSON')) {
             alert('伺服器回應格式錯誤，請稍後再試')
           } else {
-            alert(`請求失敗：${error.message}`)
+            alert(`發送信件失敗: Error: ${error.message}`)
           }
         }
       } finally {
