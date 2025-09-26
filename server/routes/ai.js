@@ -82,8 +82,8 @@ class BackendAIService {
     const requestId = this.generateRequestId()
     const startTime = Date.now()
     
-    console.log(`[${requestId}] 🚀 開始處理AI請求`)
-    console.log(`[${requestId}] 📝 用戶輸入:`, {
+    console.log(`[Request ID: ${requestId}] 🚀 開始處理AI請求`)
+    console.log(`[Request ID: ${requestId}] 📝 用戶輸入:`, {
       nickname: userInput.nickname,
       topic: userInput.topic,
       situationLength: userInput.situation?.length || 0
@@ -93,7 +93,7 @@ class BackendAIService {
       // 構建完整提示詞
       const fullPrompt = this.buildFullPrompt(userInput)
       const promptTokens = this.estimateTokens(fullPrompt)
-      console.log(`[${requestId}] 📊 提示詞Token使用量: ${promptTokens} tokens`)
+      console.log(`[Request ID: ${requestId}] 📊 輸入 Prompt Token 數量: ${promptTokens} tokens`)
 
       let response
       let usedService = 'unknown'
@@ -117,10 +117,8 @@ class BackendAIService {
       const processingTime = Date.now() - startTime
       const totalResponseTokens = this.estimateTokens(JSON.stringify(validatedResponse))
       
-      console.log(`[${requestId}] 📊 回應Token使用量: ${totalResponseTokens} tokens`)
-      console.log(`[${requestId}] 📊 總Token使用量: ${promptTokens + totalResponseTokens} tokens`)
-      console.log(`[${requestId}] ⏱️ 處理時間: ${processingTime}ms`)
-      console.log(`[${requestId}] ✅ AI處理完成`)
+      console.log(`[Request ID: ${requestId}] 📝 輸出內容 Token 數量: ${totalResponseTokens} tokens`)
+      console.log(`[Request ID: ${requestId}] 🏁 請求處理完成，總耗時: ${(processingTime / 1000).toFixed(1)}秒`)
 
       return {
         ...validatedResponse,
@@ -137,7 +135,7 @@ class BackendAIService {
       }
 
     } catch (error) {
-      console.error(`[${requestId}] ❌ 首選服務失敗:`, error.message)
+      console.error(`[Request ID: ${requestId}] ❌ 首選服務失敗:`, error.message)
       
       // 嘗試備用服務
       return await this.tryFallbackService(userInput, requestId, startTime)
@@ -145,7 +143,8 @@ class BackendAIService {
   }
 
   async callGeminiService(prompt, requestId) {
-    console.log(`[${requestId}] 🤖 使用Gemini AI服務`)
+    console.log(`[Request ID: ${requestId}] ⏳ 開始呼叫外部 AI (Gemini)...`)
+    const aiStartTime = Date.now()
     
     const model = this.geminiService.getGenerativeModel({ 
       model: 'gemini-1.5-flash-latest',
@@ -159,11 +158,18 @@ class BackendAIService {
 
     const result = await model.generateContent(prompt)
     const response = await result.response
-    return response.text()
+    const responseText = response.text()
+    
+    const aiEndTime = Date.now()
+    const aiDuration = (aiEndTime - aiStartTime) / 1000
+    console.log(`[Request ID: ${requestId}] ✅ 外部 AI 生成完畢，耗時: ${aiDuration.toFixed(1)}秒`)
+    
+    return responseText
   }
 
   async callOpenAIService(prompt, requestId, userInput = {}) {
-    console.log(`[${requestId}] 🤖 使用OpenAI GPT服務`)
+    console.log(`[Request ID: ${requestId}] ⏳ 開始呼叫外部 AI (OpenAI)...`)
+    const aiStartTime = Date.now()
     
     const { nickname = '朋友', topic = '生活', situation = '' } = userInput
     
@@ -221,11 +227,15 @@ class BackendAIService {
       max_tokens: 4000
     })
 
+    const aiEndTime = Date.now()
+    const aiDuration = (aiEndTime - aiStartTime) / 1000
+    console.log(`[Request ID: ${requestId}] ✅ 外部 AI 生成完畢，耗時: ${aiDuration.toFixed(1)}秒`)
+
     return completion.choices[0].message.content
   }
 
   async tryFallbackService(userInput, requestId, startTime) {
-    console.log(`[${requestId}] 🔄 嘗試備用AI服務`)
+    console.log(`[Request ID: ${requestId}] 🔄 嘗試備用AI服務`)
     
     try {
       const fullPrompt = this.buildFullPrompt(userInput)
@@ -250,7 +260,10 @@ class BackendAIService {
       const validatedResponse = this.validateAndEnhanceResponse(parsedResponse, userInput, requestId)
       
       const processingTime = Date.now() - startTime
-      console.log(`[${requestId}] ✅ 備用服務處理成功，耗時: ${processingTime}ms`)
+      const totalResponseTokens = this.estimateTokens(JSON.stringify(validatedResponse))
+      
+      console.log(`[Request ID: ${requestId}] 📝 輸出內容 Token 數量: ${totalResponseTokens} tokens`)
+      console.log(`[Request ID: ${requestId}] 🏁 請求處理完成，總耗時: ${(processingTime / 1000).toFixed(1)}秒`)
       
       return {
         ...validatedResponse,
@@ -258,12 +271,15 @@ class BackendAIService {
           requestId,
           processingTime,
           aiService: usedService,
-          fallback: true
+          fallback: true,
+          tokenUsage: {
+            response: totalResponseTokens
+          }
         }
       }
 
     } catch (error) {
-      console.error(`[${requestId}] ❌ 備用服務也失敗:`, error.message)
+      console.error(`[Request ID: ${requestId}] ❌ 備用服務也失敗:`, error.message)
       
       // 返回預設回應
       return this.generateFallbackResponse(userInput, requestId, startTime)
