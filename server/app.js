@@ -97,13 +97,15 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1)
 })
 
-// 啟動服務器
-const server = app.listen(PORT, () => {
-  console.log(`🚀 耶穌的信 3.0 API服務器運行在端口 ${PORT}`)
-  console.log(`📍 環境: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`🌐 本地訪問: http://localhost:${PORT}`)
-  console.log(`📊 健康檢查: http://localhost:${PORT}/api/health`)
-  console.log(`🤖 AI服務: http://localhost:${PORT}/api/ai/generate`)
-})
+// 啟動服務器（僅在非 Vercel 環境中）
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 耶穌的信 3.0 API服務器運行在端口 ${PORT}`)
+    console.log(`📍 環境: ${process.env.NODE_ENV || 'development'}`)
+    console.log(`🌐 本地訪問: http://localhost:${PORT}`)
+    console.log(`📊 健康檢查: http://localhost:${PORT}/api/health`)
+    console.log(`🤖 AI服務: http://localhost:${PORT}/api/ai/generate`)
+  })
+}
 
 export default app
