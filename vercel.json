@@ -1,26 +1,9 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
     }
-  ],
-  "routes": [
-    { "src": "/api/health", "dest": "/api/health.js" },
-    { "src": "/api/ai", "dest": "/api/ai.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
-  "functions": {
-    "api/health.js": { "runtime": "nodejs18.x" },
-    "api/ai.js": { "runtime": "nodejs18.x" }
-  },
-  "env": {
-    "NODE_ENV": "production",
-    "VITE_API_BASE_URL": "/api"
-  },
-  "build": {
-    "env": { "VITE_API_BASE_URL": "/api" }
-  }
+  ]
 }
