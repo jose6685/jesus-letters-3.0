@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { aiService } from '../services/aiService.js' // 假設你的 AI 服務在這裡
+// 移除未使用的 aiService 導入
 
 const router = express.Router()
 

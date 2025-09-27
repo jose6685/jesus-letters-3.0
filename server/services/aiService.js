@@ -6,13 +6,14 @@
 class AIService {
   constructor() {
     this.initialized = false
-    this.init()
+    // 移除 this.init() 調用以避免競態條件
   }
 
   init() {
     console.log('🤖 AI 服務初始化中...')
     this.initialized = true
     console.log('✅ AI 服務初始化完成')
+    return Promise.resolve()
   }
 
   /**
@@ -21,6 +22,11 @@ class AIService {
    * @returns {Object} AI 回應
    */
   async generateResponse(userInput) {
+    // 確保服務已初始化
+    if (!this.initialized) {
+      await this.init()
+    }
+    
     try {
       console.log('📝 開始生成 AI 回應:', userInput)
       
