@@ -74,12 +74,8 @@ export const API_CONFIG = {
     if (envUrl && !envUrl.includes('VITE_API_BASE_URL=')) {
       return envUrl;
     }
-    // 在生產環境中使用 Vercel 部署的 URL
-    if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-      return window.location.origin;
-    }
-    // 默認本地開發環境
-    return 'http://localhost:3002';
+    // 使用 Render.com 後端 API
+    return 'https://jesus-letters-3-0.onrender.com';
   })(),
   
   // 動態解析的 Base URL
@@ -89,16 +85,11 @@ export const API_CONFIG = {
   
   // API端點
   ENDPOINTS: {
-    // AI服務
-    AI_GENERATE: '/generate',
-    AI_STATUS: '/status',
-    AI_TEST: '/test',
+    // AI服務 - 修正為正確的端點路徑
+    AI: '/api/ai',
     
-    // 健康檢查
-    HEALTH: '/health',
-    HEALTH_DETAILED: '/health/detailed',
-    HEALTH_READY: '/health/ready',
-    HEALTH_LIVE: '/health/live'
+    // 健康檢查 - 修正為正確的端點路徑
+    HEALTH: '/api/health'
   },
   
   // 請求配置
@@ -231,41 +222,21 @@ export const apiClient = new APIClient()
 
 // AI服務API
 export const aiAPI = {
-  // 生成AI回復
-  async generate(data) {
-    return apiClient.post(API_CONFIG.ENDPOINTS.AI_GENERATE, data)
+  // 生成AI回復 - 使用正確的 POST 請求到 /api/ai
+  async generate(prompt) {
+    return apiClient.post(API_CONFIG.ENDPOINTS.AI, { prompt })
   },
 
-  // 獲取AI服務狀態
-  async getStatus() {
-    return apiClient.get(API_CONFIG.ENDPOINTS.AI_STATUS)
-  },
-
-  // 測試AI服務
+  // 測試AI服務連接
   async test() {
-    return apiClient.get(API_CONFIG.ENDPOINTS.AI_TEST)
+    return apiClient.get(API_CONFIG.ENDPOINTS.HEALTH)
   }
 }
 
 // 健康檢查API
 export const healthAPI = {
-  // 基本健康檢查
+  // 基本健康檢查 - 使用正確的 GET 請求到 /api/health
   async check() {
     return apiClient.get(API_CONFIG.ENDPOINTS.HEALTH)
-  },
-
-  // 詳細健康檢查
-  async detailed() {
-    return apiClient.get(API_CONFIG.ENDPOINTS.HEALTH_DETAILED)
-  },
-
-  // 就緒檢查
-  async ready() {
-    return apiClient.get(API_CONFIG.ENDPOINTS.HEALTH_READY)
-  },
-
-  // 存活檢查
-  async live() {
-    return apiClient.get(API_CONFIG.ENDPOINTS.HEALTH_LIVE)
   }
 }
