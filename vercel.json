@@ -12,45 +12,21 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server/app.js"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json",
-      "headers": {
-        "Content-Type": "application/json; charset=utf-8"
-      }
-    },
-    {
-      "src": "/favicon.svg",
-      "dest": "/favicon.svg",
-      "headers": {
-        "Content-Type": "image/svg+xml"
-      }
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/favicon.svg",
-      "headers": {
-        "Content-Type": "image/svg+xml"
-      }
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/icons/$1"
+      "dest": "/api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/index.html"
     }
   ],
   "functions": {
-    "server/app.js": {
+    "api/index.js": {
       "runtime": "nodejs18.x"
     }
   },
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "VITE_API_BASE_URL": "https://jesus-letters-3-0.vercel.app"
   },
   "build": {
     "env": {
