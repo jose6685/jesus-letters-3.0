@@ -3,6 +3,9 @@
   "version": "3.0.0",
   "description": "耶穌的信 3.0 - AI屬靈陪伴應用程序",
   "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
