@@ -1,6 +1,3 @@
 {
-  "functions": {
-    "api/ai.js": {},
-    "api/health.js": {}
-  }
+  "version": 2
 }
