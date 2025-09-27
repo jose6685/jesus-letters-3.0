@@ -1,9 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+const { GoogleGenerativeAI } = require('@google/generative-ai')
 
 // 初始化 Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || 'demo-key')
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 設置 CORS 標頭
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
